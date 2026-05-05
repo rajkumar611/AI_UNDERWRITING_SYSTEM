@@ -10,7 +10,7 @@ This agent converts that mess into clean, structured data that every downstream 
 
 ## Q1: Where does data actually enter your system — and why does that matter?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/document_ingestion_agent/` (ingestion pipeline, OCR, extraction)
+> **Implemented in:** `src/underwriting/pipeline/document_ingestion_agent/` (ingestion pipeline, OCR, extraction)
 
 **Answer:**
 
@@ -27,7 +27,7 @@ Everything downstream depends on this agent getting it right. If garbage goes in
 
 ## Q2: How do you extract structured data from a messy broker PDF?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/document_ingestion_agent/` (OCR pipeline, LLM extraction, schema validation)
+> **Implemented in:** `src/underwriting/pipeline/document_ingestion_agent/` (OCR pipeline, LLM extraction, schema validation)
 
 **Answer:**
 
@@ -49,7 +49,7 @@ The agent returns a `PartialExtraction` status. The orchestrator either requests
 
 ## Q3: This is the entry point — how do you handle prompt injection here?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/document_ingestion_agent/` (sanitisation layer), `09-security-prompt-injection/` (adversarial test suite)
+> **Implemented in:** `src/underwriting/pipeline/document_ingestion_agent/` (sanitisation layer), `09-security-prompt-injection/` (adversarial test suite)
 
 **Answer:**
 
@@ -72,7 +72,7 @@ Synthetic values that should never appear in extraction output are embedded in t
 
 ## Q4: How do you classify what type of insurance submission this is?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/document_ingestion_agent/` (document classification), `src/qbe_underwriting/platform/orchestration/` (routing based on class)
+> **Implemented in:** `src/underwriting/pipeline/document_ingestion_agent/` (document classification), `src/underwriting/platform/orchestration/` (routing based on class)
 
 **Answer:**
 
@@ -95,7 +95,7 @@ It shows the system is designed for real multi-line insurance operations, not ju
 
 ## Q5: What happens when documents are missing, incomplete, or contradictory?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/document_ingestion_agent/` (validation, partial extraction handling), `src/qbe_underwriting/platform/orchestration/` (workflow branching on incomplete data)
+> **Implemented in:** `src/underwriting/pipeline/document_ingestion_agent/` (validation, partial extraction handling), `src/underwriting/platform/orchestration/` (workflow branching on incomplete data)
 
 **Answer:**
 

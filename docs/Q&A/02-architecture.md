@@ -1,4 +1,4 @@
-# Architecture Interview Q&A — QBE-AI-Underwriting
+# Architecture Interview Q&A — AI Underwriting System
 
 Deep questions on system design, agent boundaries, and technical decisions.
 
@@ -9,7 +9,7 @@ Deep questions on system design, agent boundaries, and technical decisions.
 
 ## Q1: Walk me through your overall system architecture.
 
-> **Implemented in:** `docs/architecture/` (diagrams and design docs), `src/qbe_underwriting/platform/orchestration/` (orchestrator code)
+> **Implemented in:** `docs/architecture/` (diagrams and design docs), `src/underwriting/platform/orchestration/` (orchestrator code)
 
 **Answer:**
 
@@ -40,7 +40,7 @@ In technical terms:
 
 ## Q2: How did you decide where one agent ends and another begins?
 
-> **Implemented in:** `docs/architecture/` (agent boundary design doc), each agent folder in `pipeline/` and `src/qbe_underwriting/platform/`
+> **Implemented in:** `docs/architecture/` (agent boundary design doc), each agent folder in `pipeline/` and `src/underwriting/platform/`
 
 **Answer:**
 
@@ -59,7 +59,7 @@ Regulators in Australia (APRA) and New Zealand (RBNZ/FMA) need to know *which pa
 
 ## Q3: What happens if two agents disagree with each other?
 
-> **Implemented in:** `src/qbe_underwriting/platform/governance_agent/` (conflict resolution rules), `src/qbe_underwriting/pipeline/human_in_the_loop/` (escalation), `src/qbe_underwriting/platform/observability/` (conflict logging)
+> **Implemented in:** `src/underwriting/platform/governance_agent/` (conflict resolution rules), `src/underwriting/pipeline/human_in_the_loop/` (escalation), `src/underwriting/platform/observability/` (conflict logging)
 
 **Answer:**
 
@@ -90,13 +90,13 @@ Every choice was made for a production reason, not because it was the tutorial d
 | **Redis** | Caches agent results so a retry doesn't re-run an already-completed (and costly) agent call |
 | **Pydantic models** | Every agent input and output has a strict schema — no free text floating through the system |
 
-The one thing I'd change at real QBE scale: replace direct Anthropic API calls with an **LLM Gateway** for enterprise SLA, data residency compliance, and centralised key management.
+The one thing I'd change at real insurer scale: replace direct Anthropic API calls with an **LLM Gateway** for enterprise SLA, data residency compliance, and centralised key management.
 
 ---
 
 ## Q5: How does the system handle high load — say, 500 policy requests at once?
 
-> **Implemented in:** `src/qbe_underwriting/platform/orchestration/` (async design, stateless orchestrator), `src/qbe_underwriting/platform/cost_tracking/` (rate limit management)
+> **Implemented in:** `src/underwriting/platform/orchestration/` (async design, stateless orchestrator), `src/underwriting/platform/cost_tracking/` (rate limit management)
 
 **Answer:**
 
@@ -117,7 +117,7 @@ Batch jobs (like re-pricing an entire portfolio) are separated from the real-tim
 
 ## Q6: How do you manage prompt changes without breaking things?
 
-> **Implemented in:** `docs/architecture/` (prompt versioning design), `src/qbe_underwriting/platform/observability/` (prompt version in audit logs)
+> **Implemented in:** `docs/architecture/` (prompt versioning design), `src/underwriting/platform/observability/` (prompt version in audit logs)
 
 **Answer:**
 
@@ -134,13 +134,13 @@ Think of it as Git for prompts — but with automated tests.
 
 ---
 
-## Q7: What would need to change to take this to full production at QBE?
+## Q7: What would need to change to take this to full production at the insurer?
 
-> **Implemented in:** `docs/architecture/` (production readiness notes), `src/qbe_underwriting/platform/security/` (pen test harness)
+> **Implemented in:** `docs/architecture/` (production readiness notes), `src/underwriting/platform/security/` (pen test harness)
 
 **Answer:**
 
-This project is built to production *standards* — the architecture, patterns, and security thinking are all production-grade. But a few things would need to be added for actual QBE-scale deployment:
+This project is built to production *standards* — the architecture, patterns, and security thinking are all production-grade. But a few things would need to be added for actual insurer-scale deployment:
 
 | Gap | What's needed |
 |---|---|

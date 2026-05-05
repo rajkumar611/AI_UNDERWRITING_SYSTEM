@@ -19,12 +19,12 @@ Every step is logged, every decision is auditable, every LLM call is costed and 
 
 ```
 pipeline/                       Platform agents run across the entire flow:
-├── document_ingestion_agent     src/qbe_underwriting/platform/orchestration/     (LangGraph state machine)
-├── claims_history_agent         src/qbe_underwriting/platform/governance_agent/  (final validation)
-├── hazard_evaluation_agent      src/qbe_underwriting/platform/compliance_agent/  (APRA, RBNZ/FMA)
-├── underwriting_risk_agent      src/qbe_underwriting/platform/security/          (prompt injection defence)
-├── human_in_the_loop            src/qbe_underwriting/platform/cost_tracking/     (LLM cost attribution)
-└── pricing_agent                src/qbe_underwriting/platform/observability/     (audit trail, tracing)
+├── document_ingestion_agent     src/underwriting/platform/orchestration/     (LangGraph state machine)
+├── claims_history_agent         src/underwriting/platform/governance_agent/  (final validation)
+├── hazard_evaluation_agent      src/underwriting/platform/compliance_agent/  (APRA, RBNZ/FMA)
+├── underwriting_risk_agent      src/underwriting/platform/security/          (prompt injection defence)
+├── human_in_the_loop            src/underwriting/platform/cost_tracking/     (LLM cost attribution)
+└── pricing_agent                src/underwriting/platform/observability/     (audit trail, tracing)
 ```
 
 See [docs/architecture/end-to-end-flow.md](docs/architecture/end-to-end-flow.md) for the full flow diagram including loopbacks.
@@ -69,7 +69,7 @@ uv run alembic upgrade head
 uv run uvicorn main:app --reload
 
 # 7. Start the cost dashboard (separate terminal)
-uv run streamlit run src/qbe_underwriting/platform/cost_tracking/dashboard.py
+uv run streamlit run src/underwriting/platform/cost_tracking/dashboard.py
 ```
 
 API docs available at: http://localhost:8000/docs  
@@ -100,7 +100,7 @@ AI_UNDERWRITING_SYSTEMS/
 │   ├── human_in_the_loop/
 │   └── pricing_agent/
 │
-└── src/qbe_underwriting/platform/                    ← cross-cutting infrastructure
+└── src/underwriting/platform/                    ← cross-cutting infrastructure
     ├── orchestration/           ← LangGraph workflow engine
     ├── governance_agent/        ← final validation gate
     ├── compliance_agent/        ← APAC regulatory rules

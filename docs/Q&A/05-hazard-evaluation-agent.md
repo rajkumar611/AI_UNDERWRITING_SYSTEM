@@ -3,7 +3,7 @@
 This agent assesses the physical and environmental risk of a property.
 It runs in parallel with the claims history agent — both feed into the underwriting risk agent.
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/hazard_evaluation_agent/`
+> **Implemented in:** `src/underwriting/pipeline/hazard_evaluation_agent/`
 
 ---
 
@@ -77,7 +77,7 @@ The `confidence` score (0.0–1.0) propagates to the underwriting risk agent, wh
 
 ## Q5: How do this agent's outputs combine with claims history?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/underwriting_risk_agent/`
+> **Implemented in:** `src/underwriting/pipeline/underwriting_risk_agent/`
 
 **Answer:**
 

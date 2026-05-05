@@ -1,9 +1,9 @@
 # Compliance Agent — Interview Q&A
 
 Checks that underwriting decisions and pricing comply with regulatory requirements
-for QBE NZ's operating jurisdictions: New Zealand (RBNZ/FMA) and Australia (APRA).
+for the insurer's operating jurisdictions: New Zealand (RBNZ/FMA) and Australia (APRA).
 
-> **Implemented in:** `src/qbe_underwriting/platform/compliance_agent/`
+> **Implemented in:** `src/underwriting/platform/compliance_agent/`
 
 ---
 
@@ -11,7 +11,7 @@ for QBE NZ's operating jurisdictions: New Zealand (RBNZ/FMA) and Australia (APRA
 
 **Answer:**
 
-The agent covers two regulatory frameworks — one for each jurisdiction QBE NZ operates in:
+The agent covers two regulatory frameworks — one for each jurisdiction the insurer operates in:
 
 | Regulator | Jurisdiction | Key requirements covered |
 |---|---|---|
@@ -111,4 +111,4 @@ The compliance agent checks:
 - If the underwriter overrode the AI, is `override_reason` documented? (Regulators expect human oversight to be documented, not just performed)
 - Are the factors in `primary_risk_factors` traceable to input data? (Hallucinated rationale is not compliant)
 
-**Why this matters for QBE NZ:** RBNZ under the Insurance (Prudential Supervision) Act 2010 and APRA under CPS 220 both require insurers to have robust governance around automated decision-making. An enterprise system without documented AI rationale would fail a regulatory audit.
+**Why this matters for the insurer:** RBNZ under the Insurance (Prudential Supervision) Act 2010 and APRA under CPS 220 both require insurers to have robust governance around automated decision-making. An enterprise system without documented AI rationale would fail a regulatory audit.

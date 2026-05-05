@@ -68,7 +68,7 @@ No history doesn't mean no signal — it means we use **portfolio and regional b
 For a new customer, the agent returns:
 - **Regional loss statistics** — average claim frequency for this property type in this postcode/region
 - **Industry benchmarks** — sector-level loss ratios for this class of business
-- **Portfolio comparables** — similar risks from QBE's own book that can serve as a proxy
+- **Portfolio comparables** — similar risks from the insurer's own book that can serve as a proxy
 
 The ClaimProfile output in this case is clearly flagged as `source: BENCHMARK` rather than `source: CUSTOMER_HISTORY`. The underwriting risk agent treats benchmark-sourced profiles with higher uncertainty — it widens the confidence interval on the risk score and is more likely to refer the case for human review.
 

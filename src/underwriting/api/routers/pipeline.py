@@ -8,11 +8,11 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from qbe_underwriting.pipeline.document_ingestion_agent.agent import run as ingest
-from qbe_underwriting.pipeline.human_in_the_loop.schemas import UnderwriterDecision
-from qbe_underwriting.platform.database.connection import get_session
-from qbe_underwriting.platform.database.models import Submission, UnderwriterQueueItem
-from qbe_underwriting.platform.orchestration.workflow import resume_pipeline, run_pipeline
+from underwriting.pipeline.document_ingestion_agent.agent import run as ingest
+from underwriting.pipeline.human_in_the_loop.schemas import UnderwriterDecision
+from underwriting.platform.database.connection import get_session
+from underwriting.platform.database.models import Submission, UnderwriterQueueItem
+from underwriting.platform.orchestration.workflow import resume_pipeline, run_pipeline
 
 router = APIRouter()
 

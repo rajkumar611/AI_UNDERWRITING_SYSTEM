@@ -7,13 +7,13 @@ from decimal import Decimal
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from qbe_underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
-from qbe_underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
-from qbe_underwriting.pipeline.hazard_evaluation_agent.schemas import HazardScore
-from qbe_underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
-from qbe_underwriting.platform.cost_tracking.middleware import record_llm_cost
-from qbe_underwriting.platform.llm.client import anthropic_client, model_for
-from qbe_underwriting.platform.orchestration.prompt_registry import PromptRegistry
+from underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
+from underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
+from underwriting.pipeline.hazard_evaluation_agent.schemas import HazardScore
+from underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
+from underwriting.platform.cost_tracking.middleware import record_llm_cost
+from underwriting.platform.llm.client import anthropic_client, model_for
+from underwriting.platform.orchestration.prompt_registry import PromptRegistry
 
 logger = logging.getLogger(__name__)
 

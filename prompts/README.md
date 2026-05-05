@@ -50,7 +50,7 @@ output_schema: <schema class name in pipeline/<agent>/schemas.py>
 ## Loading a Prompt in Code
 
 ```python
-from src/qbe_underwriting/platform.orchestration.prompt_registry import PromptRegistry
+from src/underwriting/platform.orchestration.prompt_registry import PromptRegistry
 
 # Load latest active version
 prompt = PromptRegistry.load("document-ingestion-agent")

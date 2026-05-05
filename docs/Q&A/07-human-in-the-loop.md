@@ -3,7 +3,7 @@
 A workflow component, not an LLM agent. The human makes the decision; the system facilitates and records it.
 Sits between risk assessment and pricing — a mandatory checkpoint for referred and high-value cases.
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/human_in_the_loop/`
+> **Implemented in:** `src/underwriting/pipeline/human_in_the_loop/`
 
 ---
 
@@ -54,8 +54,8 @@ The underwriter audits a recommendation, not a blank form — faster and more co
 | **Approve with conditions** | Proceeds to pricing — conditions appended to policy terms |
 | **Override risk score** | Proceeds to pricing with new score; original AI score preserved for audit |
 | **Decline** | Workflow ends — decline notice generated, reason logged |
-| **Request more documents** | Loopback to `src/qbe_underwriting/pipeline/document_ingestion_agent/` — workflow pauses |
-| **Request more claims data** | Loopback to `src/qbe_underwriting/pipeline/claims_history_agent/` with targeted query |
+| **Request more documents** | Loopback to `src/underwriting/pipeline/document_ingestion_agent/` — workflow pauses |
+| **Request more claims data** | Loopback to `src/underwriting/pipeline/claims_history_agent/` with targeted query |
 | **Escalate to senior** | Reassigned to senior underwriter queue |
 
 Every action requires a mandatory free-text reason — no silent approvals or declines.
@@ -88,7 +88,7 @@ Multiple underwriters process the queue simultaneously. Cases are locked to prev
 
 ## Q5: How is a human override recorded for audit and compliance?
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/human_in_the_loop/`, `src/qbe_underwriting/platform/observability/`
+> **Implemented in:** `src/underwriting/pipeline/human_in_the_loop/`, `src/underwriting/platform/observability/`
 
 **Answer:**
 

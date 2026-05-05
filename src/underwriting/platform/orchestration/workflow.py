@@ -9,20 +9,20 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 from typing_extensions import TypedDict
 
-from qbe_underwriting.pipeline.claims_history_agent import agent as claims_agent
-from qbe_underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
-from qbe_underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
-from qbe_underwriting.pipeline.hazard_evaluation_agent import agent as hazard_agent
-from qbe_underwriting.pipeline.hazard_evaluation_agent.schemas import HazardScore
-from qbe_underwriting.pipeline.human_in_the_loop import agent as hitl_agent
-from qbe_underwriting.pipeline.human_in_the_loop.schemas import UnderwriterDecision
-from qbe_underwriting.pipeline.pricing_agent import agent as pricing_agent
-from qbe_underwriting.pipeline.pricing_agent.schemas import PricingOutput
-from qbe_underwriting.pipeline.underwriting_risk_agent import agent as risk_agent
-from qbe_underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
-from qbe_underwriting.platform.database.connection import AsyncSessionLocal
-from qbe_underwriting.platform.governance_agent import agent as governance_agent
-from qbe_underwriting.platform.governance_agent.schemas import GovernanceDecision
+from underwriting.pipeline.claims_history_agent import agent as claims_agent
+from underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
+from underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
+from underwriting.pipeline.hazard_evaluation_agent import agent as hazard_agent
+from underwriting.pipeline.hazard_evaluation_agent.schemas import HazardScore
+from underwriting.pipeline.human_in_the_loop import agent as hitl_agent
+from underwriting.pipeline.human_in_the_loop.schemas import UnderwriterDecision
+from underwriting.pipeline.pricing_agent import agent as pricing_agent
+from underwriting.pipeline.pricing_agent.schemas import PricingOutput
+from underwriting.pipeline.underwriting_risk_agent import agent as risk_agent
+from underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
+from underwriting.platform.database.connection import AsyncSessionLocal
+from underwriting.platform.governance_agent import agent as governance_agent
+from underwriting.platform.governance_agent.schemas import GovernanceDecision
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +168,7 @@ async def human_review_node(state: WorkflowState) -> dict:
 
     async with AsyncSessionLocal() as session:
         queue_item_fresh = await session.get(
-            __import__("qbe_underwriting.platform.database.models", fromlist=["UnderwriterQueueItem"]).UnderwriterQueueItem,
+            __import__("underwriting.platform.database.models", fromlist=["UnderwriterQueueItem"]).UnderwriterQueueItem,
             __import__("uuid").UUID(queue_id),
         )
         if queue_item_fresh:

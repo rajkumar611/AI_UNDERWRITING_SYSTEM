@@ -3,11 +3,11 @@
 The final gatekeeper before policy issuance. Sees the entire workflow chain and validates
 that all outputs are internally consistent, compliant, and safe to commit.
 
-> **Implemented in:** `src/qbe_underwriting/platform/governance_agent/`
+> **Implemented in:** `src/underwriting/platform/governance_agent/`
 
 ---
 
-## Q1: Why does governance sit in src/qbe_underwriting/platform/, not pipeline/?
+## Q1: Why does governance sit in src/underwriting/platform/, not pipeline/?
 
 **Answer:**
 

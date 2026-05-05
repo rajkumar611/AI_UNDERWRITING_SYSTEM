@@ -44,7 +44,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/qbe_underwriting"]
+packages = ["src/underwriting"]
 
 [tool.ruff]
 line-length = 100

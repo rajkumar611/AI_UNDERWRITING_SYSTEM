@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from qbe_underwriting.platform.database.connection import engine
-from qbe_underwriting.platform.database.models import Base
-from qbe_underwriting.api.routers import submissions, health, pipeline
+from underwriting.platform.database.connection import engine
+from underwriting.platform.database.models import Base
+from underwriting.api.routers import submissions, health, pipeline
 
 
 @asynccontextmanager

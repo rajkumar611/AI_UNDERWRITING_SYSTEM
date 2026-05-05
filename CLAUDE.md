@@ -23,7 +23,7 @@ QBE Insurance NZ) as a portfolio project targeting senior AI engineering roles i
 Every agent, the LangGraph workflow, the FastAPI pipeline endpoints, and the Streamlit UI are
 fully built and tested end-to-end.
 
-### Pipeline Agents (all in `src/qbe_underwriting/pipeline/`)
+### Pipeline Agents (all in `src/underwriting/pipeline/`)
 
 | Agent | File | Status | Notes |
 |---|---|---|---|
@@ -34,7 +34,7 @@ fully built and tested end-to-end.
 | Human-in-the-Loop | `human_in_the_loop/agent.py` | DONE | Queue enqueue, SLA, decision recording |
 | Pricing | `pricing_agent/agent.py` | DONE | Market rate tables, loadings/discounts, Claude Haiku |
 
-### Platform (all in `src/qbe_underwriting/platform/`)
+### Platform (all in `src/underwriting/platform/`)
 
 | Component | File | Status | Notes |
 |---|---|---|---|
@@ -50,9 +50,9 @@ fully built and tested end-to-end.
 
 | File | Status | Notes |
 |---|---|---|
-| `src/qbe_underwriting/api/routers/health.py` | DONE | GET /health |
-| `src/qbe_underwriting/api/routers/submissions.py` | DONE | POST + GET /api/v1/submissions |
-| `src/qbe_underwriting/api/routers/pipeline.py` | DONE | Full pipeline + queue endpoints |
+| `src/underwriting/api/routers/health.py` | DONE | GET /health |
+| `src/underwriting/api/routers/submissions.py` | DONE | POST + GET /api/v1/submissions |
+| `src/underwriting/api/routers/pipeline.py` | DONE | Full pipeline + queue endpoints |
 | `streamlit_app.py` | DONE | Multi-page UI: Submit Document, Queue, Submission Lookup |
 | `main.py` | DONE | FastAPI app wiring all routers |
 
@@ -100,7 +100,7 @@ uv run pytest
 
 # API docs:      http://localhost:8081/docs
 # Streamlit UI:  http://localhost:8502
-# Cost dashboard: uv run streamlit run src/qbe_underwriting/platform/cost_tracking/dashboard.py
+# Cost dashboard: uv run streamlit run src/underwriting/platform/cost_tracking/dashboard.py
 ```
 
 ---

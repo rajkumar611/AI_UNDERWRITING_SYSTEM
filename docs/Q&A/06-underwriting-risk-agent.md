@@ -105,7 +105,7 @@ class RiskRationale(BaseModel):
     mitigating_factors: list[str]        # ["15_YEAR_CLEAN_RECORD", "SPRINKLER_SYSTEM"]
     data_quality_notes: list[str]        # ["SUM_INSURED_UNVERIFIED"]
     decision_basis: str                  # human-readable summary
-    applicable_guidelines: list[str]    # ["QBE_PROPERTY_UW_GUIDE_v4.2", "RBNZ_FLOOD_GUIDANCE_2023"]
+    applicable_guidelines: list[str]    # ["AI_UW_PROPERTY_GUIDE_v4.2", "RBNZ_FLOOD_GUIDANCE_2023"]
 ```
 
 This means:

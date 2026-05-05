@@ -3,7 +3,7 @@
 Cross-cutting security layer active at every agent boundary.
 Primary focus: prompt injection prevention, adversarial testing, and data exfiltration detection.
 
-> **Implemented in:** `src/qbe_underwriting/platform/security/`
+> **Implemented in:** `src/underwriting/platform/security/`
 
 ---
 
@@ -29,7 +29,7 @@ This is why prompt injection is treated as a **security boundary**, not a prompt
 Five layers, each independent — defence in depth:
 
 **Layer 1 — Sanitisation at ingestion (earliest possible point)**
-Broker document content is sanitised in `src/qbe_underwriting/pipeline/document_ingestion_agent/` before it reaches any other agent. Known injection patterns (instruction overrides, role redefinition phrases, jailbreak templates) are detected and stripped. The original unsanitised text is logged for audit — the sanitised version flows downstream.
+Broker document content is sanitised in `src/underwriting/pipeline/document_ingestion_agent/` before it reaches any other agent. Known injection patterns (instruction overrides, role redefinition phrases, jailbreak templates) are detected and stripped. The original unsanitised text is logged for audit — the sanitised version flows downstream.
 
 **Layer 2 — Data/instruction separation in all prompts**
 Broker-supplied content is always placed inside `<broker_document>` or `<claims_data>` tags. System prompts explicitly instruct agents to treat tagged content as data, not commands. No broker text is ever interpolated directly into the instruction section of a prompt.
@@ -49,7 +49,7 @@ A library of injection patterns runs against every agent on every code or prompt
 
 **Answer:**
 
-The test suite lives in `src/qbe_underwriting/platform/security/adversarial_tests/` and is treated as a first-class testing asset:
+The test suite lives in `src/underwriting/platform/security/adversarial_tests/` and is treated as a first-class testing asset:
 
 **Sources of test cases:**
 - Published jailbreak libraries (PromptBench, HarmBench)

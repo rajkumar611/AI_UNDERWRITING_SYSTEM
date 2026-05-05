@@ -1,4 +1,4 @@
-# End-to-End Underwriting Flow — QBE-AI-Underwriting
+# End-to-End Underwriting Flow — AI Underwriting System
 
 ## The Real Business Flow
 
@@ -124,17 +124,17 @@ This keeps every loopback logged, intentional, and recoverable.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  src/qbe_underwriting/platform/security          Active at doc ingestion + every  │
+│  src/underwriting/platform/security          Active at doc ingestion + every  │
 │                                 agent boundary. Sanitises input, │
 │                                 runs canary token checks.        │
 ├──────────────────────────────────────────────────────────────────┤
-│  src/qbe_underwriting/platform/cost_tracking     Active at every LLM call.        │
+│  src/underwriting/platform/cost_tracking     Active at every LLM call.        │
 │                                 Tags policy ID, agent, cost.     │
 ├──────────────────────────────────────────────────────────────────┤
-│  src/qbe_underwriting/platform/observability     Active at every state transition.│
+│  src/underwriting/platform/observability     Active at every state transition.│
 │                                 Logs decisions, latency, errors. │
 ├──────────────────────────────────────────────────────────────────┤
-│  src/qbe_underwriting/platform/compliance_agent  Active at steps 04, 06, issuance.│
+│  src/underwriting/platform/compliance_agent  Active at steps 04, 06, issuance.│
 │                                 Checks APRA (AU), RBNZ/FMA (NZ).│
 └──────────────────────────────────────────────────────────────────┘
 ```

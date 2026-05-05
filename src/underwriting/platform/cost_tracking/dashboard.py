@@ -1,6 +1,6 @@
 """
 LLM Cost Dashboard — run with:
-    uv run streamlit run src/qbe_underwriting/platform/cost_tracking/dashboard.py
+    uv run streamlit run src/underwriting/platform/cost_tracking/dashboard.py
 """
 from __future__ import annotations
 

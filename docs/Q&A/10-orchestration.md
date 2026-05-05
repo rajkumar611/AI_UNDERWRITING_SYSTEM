@@ -3,7 +3,7 @@
 The orchestrator is the workflow engine — it owns the state machine, manages agent routing,
 handles retries, and controls all loopbacks. Built with LangGraph.
 
-> **Implemented in:** `src/qbe_underwriting/platform/orchestration/`
+> **Implemented in:** `src/underwriting/platform/orchestration/`
 
 ---
 

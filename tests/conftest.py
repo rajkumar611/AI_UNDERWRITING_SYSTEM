@@ -6,8 +6,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from main import app
-from qbe_underwriting.platform.database.connection import get_session
-from qbe_underwriting.platform.database.models import Base
+from underwriting.platform.database.connection import get_session
+from underwriting.platform.database.models import Base
 
 TEST_DATABASE_URL = "postgresql+asyncpg://qbe:localdev@localhost:5432/qbe_underwriting_test"
 

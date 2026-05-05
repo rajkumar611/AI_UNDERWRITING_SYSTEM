@@ -5,11 +5,11 @@ from decimal import Decimal
 
 import pytest
 
-from qbe_underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
-from qbe_underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
-from qbe_underwriting.pipeline.hazard_evaluation_agent.schemas import HazardScore
-from qbe_underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
-from qbe_underwriting.pipeline.pricing_agent.schemas import PricingOutput, PremiumLoading
+from underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
+from underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
+from underwriting.pipeline.hazard_evaluation_agent.schemas import HazardScore
+from underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
+from underwriting.pipeline.pricing_agent.schemas import PricingOutput, PremiumLoading
 
 
 def test_submission_data_defaults_to_unknown_class():

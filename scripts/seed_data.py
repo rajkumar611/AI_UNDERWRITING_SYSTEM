@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from sentence_transformers import SentenceTransformer
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from qbe_underwriting.platform.database.models import (
+from underwriting.platform.database.models import (
     Claim,
     ClaimsEmbedding,
     Customer,

@@ -3,7 +3,7 @@
 Audit trail, decision logs, distributed tracing, and alerting across the entire workflow.
 Every state transition is logged. Every decision is reconstructable.
 
-> **Implemented in:** `src/qbe_underwriting/platform/observability/`
+> **Implemented in:** `src/underwriting/platform/observability/`
 
 ---
 

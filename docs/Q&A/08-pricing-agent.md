@@ -3,7 +3,7 @@
 Calculates the premium based on a confirmed, human-approved risk decision.
 Runs only after human-in-the-loop — never on an unconfirmed risk assessment.
 
-> **Implemented in:** `src/qbe_underwriting/pipeline/pricing_agent/`
+> **Implemented in:** `src/underwriting/pipeline/pricing_agent/`
 
 ---
 
@@ -51,8 +51,8 @@ Three structured inputs, all required:
 
 | Input | Source | Key fields used |
 |---|---|---|
-| `RiskAssessment` | `src/qbe_underwriting/pipeline/underwriting_risk_agent/` | `risk_score`, `primary_risk_factors`, `mitigating_factors` |
-| `UnderwriterDecision` | `src/qbe_underwriting/pipeline/human_in_the_loop/` | `override_risk_score`, `conditions`, `exclusions` |
+| `RiskAssessment` | `src/underwriting/pipeline/underwriting_risk_agent/` | `risk_score`, `primary_risk_factors`, `mitigating_factors` |
+| `UnderwriterDecision` | `src/underwriting/pipeline/human_in_the_loop/` | `override_risk_score`, `conditions`, `exclusions` |
 | `MarketRateData` | Injected at runtime by orchestrator | Base rates, loading factors, discount schedules |
 
 If the underwriter overrode the risk score, the agent prices against the **overridden score** — not the original AI score. The original is preserved in the audit trail but does not affect pricing.
@@ -75,7 +75,7 @@ For multi-location risks (e.g., a fleet insured across AU and NZ), the orchestra
 
 ## Q5: What triggers a loopback from pricing back to human review?
 
-> **Implemented in:** `src/qbe_underwriting/platform/orchestration/`, `src/qbe_underwriting/pipeline/human_in_the_loop/`
+> **Implemented in:** `src/underwriting/platform/orchestration/`, `src/underwriting/pipeline/human_in_the_loop/`
 
 **Answer:**
 

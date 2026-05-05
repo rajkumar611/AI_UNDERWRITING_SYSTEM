@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from qbe_underwriting.platform.governance_agent.schemas import GovernanceDecision, FailedCheck as GovFailedCheck
-from qbe_underwriting.platform.compliance_agent.schemas import ComplianceResult, FailedCheck as CompFailedCheck
+from underwriting.platform.governance_agent.schemas import GovernanceDecision, FailedCheck as GovFailedCheck
+from underwriting.platform.compliance_agent.schemas import ComplianceResult, FailedCheck as CompFailedCheck
 
 
 def test_governance_approved_requires_no_rejection_reasons():

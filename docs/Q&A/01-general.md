@@ -1,4 +1,4 @@
-# General Interview Q&A — QBE-AI-Underwriting
+# General Interview Q&A — AI Underwriting System
 
 These are cross-cutting questions a senior hiring manager or AI architect will ask.
 Understand every answer deeply — don't memorise, reason through them.
@@ -11,7 +11,7 @@ Understand every answer deeply — don't memorise, reason through them.
 
 ## Q1: Why multi-agent instead of a single LLM with a long prompt?
 
-> **Implemented in:** `docs/architecture/` (design), all agent folders in `pipeline/` and `src/qbe_underwriting/platform/`
+> **Implemented in:** `docs/architecture/` (design), all agent folders in `pipeline/` and `src/underwriting/platform/`
 
 **Answer:**
 
@@ -34,7 +34,7 @@ These are fundamentally different jobs. Separating them into agents means:
 
 ## Q2: How do you prevent an agent from hallucinating a risk score that flows into a pricing decision?
 
-> **Implemented in:** `src/qbe_underwriting/platform/governance_agent/` (cross-agent validation, confidence thresholds), `src/qbe_underwriting/platform/orchestration/` (retry and rejection logic), `src/qbe_underwriting/pipeline/pricing_agent/` (structured output schema), `src/qbe_underwriting/pipeline/human_in_the_loop/` (escalation when confidence is low)
+> **Implemented in:** `src/underwriting/platform/governance_agent/` (cross-agent validation, confidence thresholds), `src/underwriting/platform/orchestration/` (retry and rejection logic), `src/underwriting/pipeline/pricing_agent/` (structured output schema), `src/underwriting/pipeline/human_in_the_loop/` (escalation when confidence is low)
 
 **Answer:**
 
@@ -57,7 +57,7 @@ Think of it as: schema validation catches *format* errors, confidence thresholds
 
 ## Q3: How does your orchestrator handle agent failure mid-workflow?
 
-> **Implemented in:** `src/qbe_underwriting/platform/orchestration/` (state machine, retry logic, workflow persistence), `src/qbe_underwriting/pipeline/human_in_the_loop/` (escalation on persistent failure), `src/qbe_underwriting/platform/observability/` (failure visibility and alerting)
+> **Implemented in:** `src/underwriting/platform/orchestration/` (state machine, retry logic, workflow persistence), `src/underwriting/pipeline/human_in_the_loop/` (escalation on persistent failure), `src/underwriting/platform/observability/` (failure visibility and alerting)
 
 **Answer:**
 
@@ -76,7 +76,7 @@ Think of the Orchestrator like an airline operations centre. When a flight (work
 
 ## Q4: How do you attribute LLM costs to a specific policy or feature?
 
-> **Implemented in:** `src/qbe_underwriting/platform/cost_tracking/` (middleware, cost ledger, dashboard), `src/qbe_underwriting/platform/orchestration/` (workflow and policy ID propagation), `src/qbe_underwriting/platform/observability/` (anomaly alerts on cost spikes)
+> **Implemented in:** `src/underwriting/platform/cost_tracking/` (middleware, cost ledger, dashboard), `src/underwriting/platform/orchestration/` (workflow and policy ID propagation), `src/underwriting/platform/observability/` (anomaly alerts on cost spikes)
 
 **Answer:**
 
@@ -105,7 +105,7 @@ A sudden cost spike automatically triggers an alert — it usually means a promp
 
 ## Q5: What's your approach to prompt injection prevention?
 
-> **Implemented in:** `src/qbe_underwriting/platform/security/` (sanitisation, adversarial test suite, canary tokens), `src/qbe_underwriting/platform/governance_agent/` (output validation layer), `src/qbe_underwriting/platform/orchestration/` (instruction hierarchy enforcement)
+> **Implemented in:** `src/underwriting/platform/security/` (sanitisation, adversarial test suite, canary tokens), `src/underwriting/platform/governance_agent/` (output validation layer), `src/underwriting/platform/orchestration/` (instruction hierarchy enforcement)
 
 **Answer:**
 
@@ -136,7 +136,7 @@ Fake sensitive values are embedded in the context (e.g., a fake API key). If any
 
 ## Q6: How do you make underwriting decisions explainable to a regulator?
 
-> **Implemented in:** `src/qbe_underwriting/platform/observability/` (full audit trail, prompt versioning, decision logs), `src/qbe_underwriting/platform/governance_agent/` (rule trace and decision rationale), `src/qbe_underwriting/platform/compliance_agent/` (regulatory rules, APRA/RBNZ alignment)
+> **Implemented in:** `src/underwriting/platform/observability/` (full audit trail, prompt versioning, decision logs), `src/underwriting/platform/governance_agent/` (rule trace and decision rationale), `src/underwriting/platform/compliance_agent/` (regulatory rules, APRA/RBNZ alignment)
 
 **Answer:**
 
@@ -161,7 +161,7 @@ This also protects the business: if a decision is ever challenged legally, the a
 
 ## Q7: Why would a finance team care about your LLM cost dashboard?
 
-> **Implemented in:** `src/qbe_underwriting/platform/cost_tracking/` (dashboard UI, cost aggregation, anomaly alerts), `src/qbe_underwriting/platform/observability/` (cost trend monitoring)
+> **Implemented in:** `src/underwriting/platform/cost_tracking/` (dashboard UI, cost aggregation, anomaly alerts), `src/underwriting/platform/observability/` (cost trend monitoring)
 
 **Answer:**
 
@@ -183,7 +183,7 @@ This turns LLM spend from a black box into a managed operational cost — the sa
 
 ## Q8: How is this different from just using a RAG pipeline?
 
-> **Implemented in:** `docs/architecture/` (overall design rationale), `src/qbe_underwriting/pipeline/hazard_evaluation_agent/` (RAG used internally for historical claims retrieval), `src/qbe_underwriting/platform/orchestration/` (workflow orchestration beyond retrieval)
+> **Implemented in:** `docs/architecture/` (overall design rationale), `src/underwriting/pipeline/hazard_evaluation_agent/` (RAG used internally for historical claims retrieval), `src/underwriting/platform/orchestration/` (workflow orchestration beyond retrieval)
 
 **Answer:**
 
@@ -191,7 +191,7 @@ RAG (Retrieval-Augmented Generation) is a technique for grounding LLM responses 
 
 A good analogy: RAG is like giving a doctor access to a medical library. Useful. But it doesn't replace the hospital — the triage, the specialist referrals, the pharmacy, the billing system, the regulator reporting.
 
-QBE-AI-Underwriting *uses* RAG inside specific agents (the Hazard Agent retrieves historical claims data for similar properties), but the system as a whole does much more:
+The AI Underwriting System *uses* RAG inside specific agents (the Hazard Agent retrieves historical claims data for similar properties), but the system as a whole does much more:
 
 | RAG alone | This system |
 |---|---|

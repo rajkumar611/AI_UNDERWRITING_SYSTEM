@@ -3,7 +3,7 @@
 Every LLM call in the system is measured, tagged, and stored.
 The cost dashboard gives finance teams, management, and engineering full visibility into AI spend.
 
-> **Implemented in:** `src/qbe_underwriting/platform/cost_tracking/`
+> **Implemented in:** `src/underwriting/platform/cost_tracking/`
 
 ---
 

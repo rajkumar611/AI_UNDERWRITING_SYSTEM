@@ -24,8 +24,8 @@ SAMPLES = {
 
 async def main(sample_name: str = "harbour_fresh") -> None:
     # Import here so .env is loaded before anything else
-    from qbe_underwriting.pipeline.document_ingestion_agent.agent import run
-    from qbe_underwriting.platform.database.connection import AsyncSessionLocal
+    from underwriting.pipeline.document_ingestion_agent.agent import run
+    from underwriting.platform.database.connection import AsyncSessionLocal
 
     if sample_name not in SAMPLES:
         print(f"Unknown sample: {sample_name!r}")
