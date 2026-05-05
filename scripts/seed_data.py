@@ -20,7 +20,7 @@ from underwriting.platform.database.models import (
     Regulation,
 )
 
-DATABASE_URL = "postgresql+asyncpg://qbe:localdev@localhost:5432/qbe_underwriting"
+DATABASE_URL = "postgresql+asyncpg://qbe:localdev@localhost:5432/aus_underwriting"
 
 # ── Customers ─────────────────────────────────────────────────────────────────
 # Pre-generate UUIDs so claims can reference them immediately

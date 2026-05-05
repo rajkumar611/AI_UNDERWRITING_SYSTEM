@@ -3,7 +3,7 @@ services:
   postgres:
     image: pgvector/pgvector:pg17
     environment:
-      POSTGRES_DB: qbe_underwriting
+      POSTGRES_DB: aus_underwriting
       POSTGRES_USER: qbe
       POSTGRES_PASSWORD: localdev
     ports:
@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U qbe -d qbe_underwriting"]
+      test: ["CMD-SHELL", "pg_isready -U qbe -d aus_underwriting"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -34,7 +34,7 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://qbe:localdev@postgres:5432/qbe_underwriting
+      DATABASE_URL: postgresql+asyncpg://qbe:localdev@postgres:5432/aus_underwriting
       REDIS_URL: redis://redis:6379/0
     depends_on:
       postgres:
@@ -51,7 +51,7 @@ services:
       - "8501:8501"
     env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://qbe:localdev@postgres:5432/qbe_underwriting
+      DATABASE_URL: postgresql+asyncpg://qbe:localdev@postgres:5432/aus_underwriting
     depends_on:
       postgres:
         condition: service_healthy

@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 
 
 class DatabaseSettings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://qbe:localdev@localhost:5432/qbe_underwriting"
+    DATABASE_URL: str = "postgresql+asyncpg://qbe:localdev@localhost:5432/aus_underwriting"
 
     class Config:
         env_file = ".env"

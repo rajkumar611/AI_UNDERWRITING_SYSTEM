@@ -15,7 +15,7 @@ from sqlalchemy import create_engine, text
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://qbe:localdev@localhost:5432/qbe_underwriting",
+    "postgresql+asyncpg://qbe:localdev@localhost:5432/aus_underwriting",
 ).replace("+asyncpg", "")  # streamlit uses sync driver
 
 

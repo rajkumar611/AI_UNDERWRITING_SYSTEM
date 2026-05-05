@@ -9,7 +9,7 @@ from main import app
 from underwriting.platform.database.connection import get_session
 from underwriting.platform.database.models import Base
 
-TEST_DATABASE_URL = "postgresql+asyncpg://qbe:localdev@localhost:5432/qbe_underwriting_test"
+TEST_DATABASE_URL = "postgresql+asyncpg://qbe:localdev@localhost:5432/aus_underwriting_test"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(bind=test_engine, class_=AsyncSession, expire_on_commit=False)
