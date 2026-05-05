@@ -327,8 +327,6 @@ uv run pytest -v --cov=src        # with coverage
 - **NZ** — RBNZ/FMA regulatory rules; NZD pricing; seismic + flood hazard data
 - **AU** — APRA regulatory rules; AUD pricing; bushfire + cyclone + flood hazard data
 
-Singapore, MAS, and SGD are out of scope — this system operates in NZ and AU only.
-
 ---
 
 ## Interview Q&A
