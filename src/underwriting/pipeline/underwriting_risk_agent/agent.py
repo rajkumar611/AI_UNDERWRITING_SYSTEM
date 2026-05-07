@@ -23,6 +23,65 @@ MAX_RETRIES = 2
 
 _FIFTY_MILLION = Decimal("50000000")
 
+# ── Deterministic scoring formulas ────────────────────────────────────────────
+# LLM decides ACCEPT/DECLINE/REFER and writes rationale.
+# These formulas produce stable numeric outputs from the same structured inputs,
+# ensuring identical documents always yield identical scores regardless of
+# submission_id or minor LLM float variation.
+
+_HAZARD_BASE_SCORE: dict[str, float] = {
+    "LOW": 0.20, "MEDIUM": 0.45, "HIGH": 0.70, "EXTREME": 0.90,
+}
+_FREQ_TREND_ADJ: dict[str, float] = {
+    "INCREASING": 0.05, "STABLE": 0.00, "DECREASING": -0.03, "INSUFFICIENT_DATA": 0.02,
+}
+
+
+def _deterministic_risk_score(hazard_score: HazardScore, claim_profile: ClaimProfile) -> float:
+    base = _HAZARD_BASE_SCORE.get(hazard_score.overall_hazard_level, 0.45)
+    claims_adj = min(claim_profile.total_claims_3yr * 0.05, 0.20)
+    large_loss_adj = 0.05 if claim_profile.largest_single_loss > Decimal("200000") else 0.0
+    trend_adj = _FREQ_TREND_ADJ.get(claim_profile.claim_frequency_trend, 0.0)
+    return round(min(0.99, max(0.01, base + claims_adj + large_loss_adj + trend_adj)), 2)
+
+
+def _compute_signal_conflict(hazard_score: HazardScore, claim_profile: ClaimProfile) -> bool:
+    """Deterministic signal conflict: fires when hazard and claims data point in opposite directions."""
+    high_hazard = hazard_score.overall_hazard_level in ("HIGH", "EXTREME")
+    low_hazard = hazard_score.overall_hazard_level in ("LOW", "NEGLIGIBLE")
+    risky_claims = (
+        claim_profile.total_claims_3yr >= 3
+        or claim_profile.largest_single_loss > Decimal("500000")
+        or bool({"HIGH_FREQUENCY", "FRAUD_SUSPICION", "REPEAT_FLOOD", "REPEAT_FIRE"} & set(claim_profile.risk_flags))
+    )
+    clean_claims = (
+        claim_profile.total_claims_3yr == 0
+        and claim_profile.claim_frequency_trend in ("DECREASING", "INSUFFICIENT_DATA")
+        and not claim_profile.risk_flags
+    )
+    return (low_hazard and risky_claims) or (high_hazard and clean_claims)
+
+
+def _deterministic_confidence(
+    hazard_score: HazardScore,
+    claim_profile: ClaimProfile,
+    submission_data: SubmissionData,
+    signal_conflict: bool,
+) -> float:
+    conf = 0.92
+    if claim_profile.data_quality == "LOW":
+        conf -= 0.15
+    elif claim_profile.data_quality == "MEDIUM":
+        conf -= 0.05
+    conf -= len(hazard_score.data_gaps) * 0.04
+    if signal_conflict:
+        conf -= 0.10
+    if submission_data.extraction_confidence == "medium":
+        conf -= 0.03
+    elif submission_data.extraction_confidence == "low":
+        conf -= 0.10
+    return round(max(0.50, min(0.98, conf)), 2)
+
 
 # ── Deterministic pre-screen ──────────────────────────────────────────────────
 
@@ -50,8 +109,9 @@ def _pre_screen(
     if submission_data.sum_insured and submission_data.sum_insured > _FIFTY_MILLION:
         return "REFER", "sum_insured > NZD/AUD 50,000,000"
 
-    if claim_profile.data_quality == "LOW":
-        return "REFER", "claim_profile.data_quality == LOW"
+    # data_quality == LOW is passed to the LLM risk agent — it has full context
+    # (submission declared claims, hazard score) to make a nuanced judgment.
+    # Hard pre-screen only for fraud and extreme hazard combinations.
 
     if hazard_score.confidence < 0.50:
         return "REFER", f"hazard_score.confidence ({hazard_score.confidence:.2f}) < 0.50"
@@ -230,8 +290,14 @@ async def run(
 
             assessment = RiskAssessment.model_validate(data)
 
-            # Safety: LLM must never override a pre-screen decision
-            # (pre-screen already returned early above, but guard against prompt injection)
+            # Override LLM-generated floats with deterministic formulas so that
+            # identical input documents always produce identical numeric outputs.
+            assessment.signal_conflict = _compute_signal_conflict(hazard_score, claim_profile)
+            assessment.risk_score = _deterministic_risk_score(hazard_score, claim_profile)
+            assessment.confidence_score = _deterministic_confidence(
+                hazard_score, claim_profile, submission_data, assessment.signal_conflict
+            )
+
             logger.info(
                 "underwriting_risk_agent: LLM decision=%s  score=%.2f  confidence=%.2f",
                 assessment.risk_decision, assessment.risk_score, assessment.confidence_score,

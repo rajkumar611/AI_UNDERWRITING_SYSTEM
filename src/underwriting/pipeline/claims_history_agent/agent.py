@@ -23,6 +23,80 @@ AGENT_NAME = "claims_history_agent"
 TOP_K = 8
 MAX_RETRIES = 2
 
+# ── Deterministic stats from raw records ──────────────────────────────────────
+# The LLM writes risk_flags, data_quality, and qualitative rationale.
+# All numeric/categorical fields that feed downstream scoring formulas are
+# computed here in Python so identical DB results always yield identical outputs.
+
+
+def _compute_stats_from_records(records: list[dict]) -> dict:
+    """Derive deterministic numeric fields directly from raw claim records."""
+    cutoff_3yr = _cutoff(3)
+    cutoff_5yr = _cutoff(5)
+
+    amounts_3yr: list[Decimal] = []
+    amounts_3to5yr: list[Decimal] = []
+    amounts_all: list[Decimal] = []
+
+    for rec in records:
+        amount = Decimal(str(rec["incurred_amount"])) if rec.get("incurred_amount") else Decimal("0")
+        amounts_all.append(amount)
+
+        claim_date: datetime | None = None
+        if rec.get("claim_date"):
+            try:
+                claim_date = datetime.fromisoformat(str(rec["claim_date"]))
+                if claim_date.tzinfo is None:
+                    claim_date = claim_date.replace(tzinfo=timezone.utc)
+            except (ValueError, TypeError):
+                pass
+
+        if claim_date and claim_date >= cutoff_5yr:
+            if claim_date >= cutoff_3yr:
+                amounts_3yr.append(amount)
+            else:
+                amounts_3to5yr.append(amount)
+
+    count_3yr = len(amounts_3yr)
+    count_5yr = count_3yr + len(amounts_3to5yr)
+
+    # Frequency trend: annualised rate recent 3yr vs prior 2yr window
+    annual_recent = count_3yr / 3.0
+    annual_prior = len(amounts_3to5yr) / 2.0
+    if count_3yr == 0 and len(amounts_3to5yr) == 0:
+        trend = "INSUFFICIENT_DATA"
+    elif len(amounts_3to5yr) == 0:
+        trend = "INCREASING" if count_3yr >= 2 else "INSUFFICIENT_DATA"
+    elif annual_recent > annual_prior * 1.25:
+        trend = "INCREASING"
+    elif annual_recent < annual_prior * 0.75:
+        trend = "DECREASING"
+    else:
+        trend = "STABLE"
+
+    return {
+        "total_claims_3yr": count_3yr,
+        "total_claims_5yr": count_5yr,
+        "total_incurred_3yr": sum(amounts_3yr, Decimal("0")),
+        "total_incurred_5yr": sum(amounts_3yr + amounts_3to5yr, Decimal("0")),
+        "largest_single_loss": max(amounts_all, default=Decimal("0")),
+        "claim_frequency_trend": trend,
+    }
+
+
+def _deterministic_data_quality(retrieval_source: str, record_count: int) -> str:
+    if retrieval_source == "CUSTOMER_HISTORY":
+        if record_count >= 3:
+            return "HIGH"
+        return "MEDIUM" if record_count >= 1 else "LOW"
+    return "MEDIUM" if record_count >= 5 else "LOW"
+
+
+def _deterministic_profile_confidence(retrieval_source: str, record_count: int) -> float:
+    if retrieval_source == "CUSTOMER_HISTORY":
+        return round(min(0.90, 0.70 + record_count * 0.05), 2)
+    return round(min(0.70, 0.50 + record_count * 0.025), 2)
+
 # ── Embedding model (loaded once per process) ─────────────────────────────────
 
 @lru_cache(maxsize=1)
@@ -269,6 +343,20 @@ async def run(
             allowed = ClaimProfile.model_fields.keys()
             data = {k: v for k, v in data.items() if k in allowed}
             profile = ClaimProfile.model_validate(data)
+
+            # Override LLM-generated numeric/categorical fields with deterministic
+            # values computed directly from DB records, so identical inputs always
+            # produce identical downstream risk and confidence scores.
+            stats = _compute_stats_from_records(records)
+            profile.total_claims_3yr = stats["total_claims_3yr"]
+            profile.total_claims_5yr = stats["total_claims_5yr"]
+            profile.total_incurred_3yr = stats["total_incurred_3yr"]
+            profile.total_incurred_5yr = stats["total_incurred_5yr"]
+            profile.largest_single_loss = stats["largest_single_loss"]
+            profile.claim_frequency_trend = stats["claim_frequency_trend"]
+            profile.data_quality = _deterministic_data_quality(retrieval_source, len(records))
+            profile.confidence = _deterministic_profile_confidence(retrieval_source, len(records))
+
             logger.info(
                 "claims_history_agent: success  flags=%s  confidence=%.2f  source=%s",
                 profile.risk_flags, profile.confidence, profile.source,

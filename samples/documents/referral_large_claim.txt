@@ -1,0 +1,81 @@
+COMMERCIAL PROPERTY INSURANCE SUBMISSION
+Bay of Plenty Commercial Brokers Ltd
+Level 2, 82 Devonport Road, Tauranga 3110
+Phone: +64 7 555 0480 | Email: commercial@bopbrokers.co.nz
+
+Date: 11 April 2025
+Broker Reference: BOP-2025-0744
+Submission Reference: SUB-2025-00744
+
+================================================================
+INSURED DETAILS
+================================================================
+Insured Name:           Tauranga Cold Chain Holdings Ltd
+NZBN:                   9429066677889
+Registered Address:     45 Portside Drive, Mount Maunganui 3116, New Zealand
+Contact Person:         Lisa Park
+Contact Email:          l.park@taurangacoldchain.co.nz
+Contact Phone:          +64 7 555 0512
+
+================================================================
+RISK / PROPERTY DETAILS
+================================================================
+Risk Address:           45 Portside Drive, Mount Maunganui 3116, New Zealand
+Construction Type:      Reinforced concrete, insulated panel walls
+Year Built:             2012
+Number of Storeys:      1
+Gross Floor Area:       6,800 sqm
+Occupancy Type:         Temperature-controlled cold storage and distribution
+Security Features:      Monitored alarm system, CCTV (24 cameras), access
+                        control, automatic sprinkler system, refrigerant leak
+                        detection system
+
+================================================================
+COVERAGE REQUESTED
+================================================================
+Sum Insured:            NZD 14,500,000
+Coverage Type:          Material Damage and Business Interruption
+Policy Period Start:    01 June 2025
+Policy Period End:      01 June 2026
+Excess Requested:       NZD 50,000
+
+================================================================
+CLAIMS HISTORY (Self-declared, last 5 years)
+================================================================
+Number of Claims:       1
+Largest Single Loss:    NZD 1,050,000
+Description:            Claim 1 (March 2023) — Catastrophic refrigeration
+                        compressor failure across three cold rooms. Complete
+                        stock loss (NZD 680,000) plus equipment replacement
+                        and building repairs (NZD 370,000). Total incurred
+                        NZD 1,050,000. Root cause: manufacturing defect in
+                        primary compressor unit. Fully settled. Full
+                        refrigeration plant replaced May 2023.
+
+================================================================
+ADDITIONAL RISK INFORMATION
+================================================================
+Following the 2023 claim, a full mechanical and electrical review was
+completed by an independent engineer (June 2023). All refrigeration
+plant replaced with Carrier commercial units under 5-year manufacturer
+warranty. Preventive maintenance contract in place (quarterly
+inspections). No further claims or incidents since replacement.
+
+================================================================
+DOCUMENTS ATTACHED
+================================================================
+- Broker Submission Form (this document)
+- Property Valuation Report dated January 2025 (NZD 14,500,000)
+- Engineering Review Report — June 2023
+- Refrigeration Plant Replacement Certificate — May 2023
+- Maintenance Contract — effective July 2023
+- Site photographs (16 images)
+================================================================
+
+EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
+Reason: Single large loss of NZD 1,050,000 in last 3 years. Despite only
+1 claim, the severity (over NZD 1 million) significantly elevates the risk
+profile. AI will flag the large loss and return REFER. Underwriter should
+review the post-claim remediation evidence and decide on conditions (e.g.
+higher excess, mandatory annual refrigeration inspection).
+================================================================

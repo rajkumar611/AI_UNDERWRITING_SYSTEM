@@ -35,6 +35,14 @@ Description:            No claims in the last 5 years.
 NOTE FROM BROKER
 ================================================================
 Valuation report is pending — client is arranging an independent
-valuation. Sum insured and floor area will be confirmed once the
-report is received, expected within 2 weeks.
+valuation. Sum insured, year built, floor area, and NZBN will be
+confirmed once the report is received, expected within 2 weeks.
+================================================================
+
+EXPECTED OUTCOME: REFER → REQUEST MORE DOCUMENTS
+Missing critical fields: Sum Insured, Year Built, Gross Floor Area, NZBN,
+Submission Reference, phone number. Data quality will be assessed as LOW
+and extraction confidence as LOW, triggering auto-REFER pre-screen rule.
+Underwriter action: REQUEST_MORE_DOCUMENTS — send back to broker to
+resubmit once the valuation report and all required fields are available.
 ================================================================

@@ -17,6 +17,39 @@ logger = logging.getLogger(__name__)
 AGENT_NAME = "hazard_evaluation_agent"
 MAX_RETRIES = 2
 
+# ── Deterministic scoring formulas ────────────────────────────────────────────
+# LLM decides categorical hazard levels and writes rationale.
+# Numeric floats are computed deterministically from those levels so that
+# identical input documents always yield identical scores across every run.
+
+_HAZARD_LEVEL_SCORE: dict[str, float] = {
+    "EXTREME": 0.90, "HIGH": 0.70, "MEDIUM": 0.45, "LOW": 0.20, "NEGLIGIBLE": 0.05,
+}
+
+
+def _deterministic_overall_score(overall_hazard_level: str) -> float:
+    return _HAZARD_LEVEL_SCORE.get(overall_hazard_level, 0.45)
+
+
+def _deterministic_data_gaps(submission_data: SubmissionData) -> list[str]:
+    """Compute data gaps from missing submission fields — never left to the LLM."""
+    gaps: list[str] = []
+    unknown = {"unknown", "not provided", "none", ""}
+    if not submission_data.construction_type or submission_data.construction_type.lower() in unknown:
+        gaps.append("construction_type unknown")
+    if not submission_data.year_built:
+        gaps.append("year_built unknown")
+    if not submission_data.gross_floor_area_sqm:
+        gaps.append("gross_floor_area unknown")
+    if not submission_data.occupancy_type or submission_data.occupancy_type.lower() in unknown:
+        gaps.append("occupancy_type unknown")
+    return gaps
+
+
+def _deterministic_confidence(data_gaps: list[str]) -> float:
+    conf = 0.90 - len(data_gaps) * 0.05
+    return round(max(0.50, min(0.95, conf)), 2)
+
 
 # ── Simulated external hazard data ────────────────────────────────────────────
 # In production: replace with live calls to GeoNet (NZ seismic), NIWA (NZ flood),
@@ -53,6 +86,17 @@ _AU_FLOOD: dict[str, str] = {
 
 _CYCLONE_REGIONS = {"cairns", "townsville", "darwin", "broome", "mackay", "rockhampton"}
 _COASTAL_KEYWORDS = {"marine parade", "waterfront", "beach", "coastal", "harbour", "esplanade"}
+_INDUSTRIAL_KEYWORDS = {"industrial", "warehouse", "factory", "port", "wharf", "freight", "chemical", "refinery"}
+_COMMERCIAL_CENTRAL_KEYWORDS = {"central", " cbd", "city centre", "queen st", "lambton quay", "victoria st"}
+
+
+def _industrial_proximity(addr: str) -> str:
+    a = addr.lower()
+    if any(kw in a for kw in _INDUSTRIAL_KEYWORDS):
+        return "HIGH — industrial or warehouse indicators present in address"
+    if any(kw in a for kw in _COMMERCIAL_CENTRAL_KEYWORDS):
+        return "LOW — city centre / commercial precinct; no industrial zoning expected"
+    return "UNKNOWN — manual check required"
 
 
 def _derive_hazard_data(risk_address: str, jurisdiction: str) -> dict:
@@ -80,7 +124,7 @@ def _derive_hazard_data(risk_address: str, jurisdiction: str) -> dict:
             "coastal_erosion_risk": "MEDIUM" if is_coastal else "LOW",
             "bushfire_risk": "LOW",
             "cyclone_exposure": "LOW",
-            "industrial_proximity": "UNKNOWN — manual check required",
+            "industrial_proximity": _industrial_proximity(risk_address),
         }
     else:  # AU
         fire = lookup(_AU_FIRE, "MEDIUM")
@@ -95,7 +139,7 @@ def _derive_hazard_data(risk_address: str, jurisdiction: str) -> dict:
             "cyclone_exposure": cyclone,
             "coastal_erosion_risk": "MEDIUM" if is_coastal else "LOW",
             "seismic_hazard": "LOW",
-            "industrial_proximity": "UNKNOWN — manual check required",
+            "industrial_proximity": _industrial_proximity(risk_address),
         }
 
 
@@ -191,6 +235,13 @@ async def run(
             allowed = HazardScore.model_fields.keys()
             data = {k: v for k, v in data.items() if k in allowed}
             score = HazardScore.model_validate(data)
+
+            # Override LLM-generated floats with deterministic formulas so that
+            # identical input documents always produce identical numeric outputs.
+            score.data_gaps = _deterministic_data_gaps(submission_data)
+            score.overall_hazard_score = _deterministic_overall_score(score.overall_hazard_level)
+            score.confidence = _deterministic_confidence(score.data_gaps)
+
             logger.info(
                 "hazard_evaluation_agent: success  overall=%s (%.2f)  confidence=%.2f",
                 score.overall_hazard_level, score.overall_hazard_score, score.confidence,

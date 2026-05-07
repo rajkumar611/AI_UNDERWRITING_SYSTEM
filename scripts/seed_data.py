@@ -842,15 +842,18 @@ REGULATIONS = [
 
 async def seed(session: AsyncSession) -> None:
     from sqlalchemy import text
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
     print("Clearing existing data...")
     await session.execute(text("DELETE FROM claims_embeddings"))
     await session.execute(text("DELETE FROM claims"))
     await session.execute(text("DELETE FROM regulations"))
     await session.commit()
 
-    print(f"\nSeeding {len(CUSTOMERS)} customers...")
+    print(f"\nSeeding {len(CUSTOMERS)} customers (upsert — safe to re-run)...")
     for i, c in enumerate(CUSTOMERS, 1):
-        session.add(Customer(**c))
+        stmt = pg_insert(Customer).values(**c).on_conflict_do_nothing(index_elements=["id"])
+        await session.execute(stmt)
         print(f"  [{i:02d}/{len(CUSTOMERS)}] {c['customer_ref']} — {c['full_name']}")
     await session.flush()
 
@@ -859,6 +862,8 @@ async def seed(session: AsyncSession) -> None:
         session.add(Claim(**c))
         print(f"  [{i:02d}/{len(CLAIMS)}] {c['claim_number']} — {c['cause_of_loss']}")
     await session.flush()
+    await session.commit()
+    print(f"  Claims committed.")
 
     print("\nLoading sentence-transformers model (all-MiniLM-L6-v2)...")
     model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -885,13 +890,15 @@ async def seed(session: AsyncSession) -> None:
             embedding=embedding,
         ))
         print(f"  [{i:02d}/{len(CLAIMS)}] Embedded {c['claim_number']}")
+    await session.commit()
+    print(f"  Embeddings committed.")
 
     print(f"\nSeeding {len(REGULATIONS)} regulatory rules...")
     for i, reg in enumerate(REGULATIONS, 1):
         session.add(Regulation(**reg))
         print(f"  [{i:02d}/{len(REGULATIONS)}] {reg['rule_code']} — {reg['regulator']}")
-
     await session.commit()
+    print(f"  Regulations committed.")
     print("\nSeed complete.")
     print(f"  Customers : {len(CUSTOMERS)}")
     print(f"  Claims    : {len(CLAIMS)}")

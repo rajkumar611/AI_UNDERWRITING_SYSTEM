@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
 from underwriting.pipeline.human_in_the_loop.schemas import UnderwriterDecision
-from underwriting.pipeline.pricing_agent.schemas import PricingOutput
+from underwriting.pipeline.pricing_agent.schemas import PaymentOption, PremiumDiscount, PremiumLoading, PricingOutput
 from underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
 from underwriting.platform.cost_tracking.middleware import record_llm_cost
 from underwriting.platform.llm.client import anthropic_client, model_for
@@ -78,9 +78,78 @@ _DEFAULT_RATES = {"base_rate_per_mille": 1.20, "currency": "NZD"}
 
 def _market_rates(class_of_business: str, jurisdiction: str) -> dict:
     cob = class_of_business.lower()
-    return (
-        _MARKET_RATES.get(cob, {}).get(jurisdiction, _DEFAULT_RATES)
-    )
+    return _MARKET_RATES.get(cob, {}).get(jurisdiction, _DEFAULT_RATES)
+
+
+def _compute_premium(
+    sum_insured: Decimal,
+    rates: dict,
+    risk_score: float,
+    security_features: list[str],
+    year_built: int | None,
+    excess_requested: Decimal | None,
+    mitigating_factors: list[str],
+) -> dict:
+    """Deterministic premium calculation — no LLM involved in any numeric output."""
+    base = (sum_insured * Decimal(str(rates["base_rate_per_mille"])) / Decimal("1000")).quantize(Decimal("0.01"))
+
+    risk_loadings: list[dict] = []
+    if risk_score >= 0.60:
+        amt = (base * Decimal("0.20")).quantize(Decimal("0.01"))
+        risk_loadings.append({"reason": f"High risk score ({risk_score:.2f})", "amount": amt})
+    elif risk_score >= 0.40:
+        amt = (base * Decimal("0.10")).quantize(Decimal("0.01"))
+        risk_loadings.append({"reason": f"Elevated risk score ({risk_score:.2f})", "amount": amt})
+
+    features_str = " ".join(f.lower() for f in (security_features or []))
+    mit_str = " ".join(m.lower() for m in (mitigating_factors or []))
+
+    discounts: list[dict] = []
+    if "sprinkler" in features_str:
+        pct = Decimal(str(rates.get("sprinkler_discount_pct", 10)))
+        discounts.append({"reason": "Automatic sprinkler system", "amount": (base * pct / 100).quantize(Decimal("0.01"))})
+    if "alarm" in features_str or "monit" in features_str:
+        pct = Decimal(str(rates.get("monitored_alarm_discount_pct", 5)))
+        discounts.append({"reason": "Monitored alarm system", "amount": (base * pct / 100).quantize(Decimal("0.01"))})
+    if "no claims" in mit_str or "zero claims" in mit_str or "0 claims" in mit_str:
+        pct = Decimal(str(rates.get("no_claims_5yr_discount_pct", 10)))
+        discounts.append({"reason": "No claims in 3 years", "amount": (base * pct / 100).quantize(Decimal("0.01"))})
+    if year_built and year_built >= 2000:
+        pct = Decimal(str(rates.get("post_2000_build_discount_pct", 5)))
+        discounts.append({"reason": f"Post-2000 construction ({year_built})", "amount": (base * pct / 100).quantize(Decimal("0.01"))})
+
+    total_loading = sum(item["amount"] for item in risk_loadings)
+    total_discount = sum(item["amount"] for item in discounts)
+    final = base + total_loading - total_discount
+
+    currency = rates.get("currency", "NZD").lower()
+    tech_min = Decimal(str(rates.get(f"technical_minimum_{currency}", 750)))
+    if final < tech_min:
+        final = tech_min
+    final = final.quantize(Decimal("0.01"))
+
+    if excess_requested and excess_requested > 0:
+        excess = excess_requested.quantize(Decimal("0.01"))
+    else:
+        std_pct = Decimal(str(rates.get("standard_excess_pct_sum_insured", 0.2)))
+        excess = (sum_insured * std_pct / 100).quantize(Decimal("1"))
+
+    payment_options = [
+        {"frequency": "ANNUAL", "instalment_amount": final, "total_amount": final},
+        {"frequency": "QUARTERLY", "instalment_amount": (final / 4).quantize(Decimal("0.01")), "total_amount": final},
+        {"frequency": "MONTHLY", "instalment_amount": (final / 12).quantize(Decimal("0.01")), "total_amount": final},
+    ]
+
+    return {
+        "base_premium": base,
+        "risk_loadings": risk_loadings,
+        "claims_loadings": [],
+        "discounts": discounts,
+        "final_premium": final,
+        "premium_currency": rates.get("currency", "NZD"),
+        "excess_recommended": excess,
+        "payment_options": payment_options,
+    }
 
 
 # ── JSON helpers ──────────────────────────────────────────────────────────────
@@ -128,6 +197,22 @@ async def run(
 
     rates = _market_rates(class_of_business, jurisdiction)
 
+    # ── Step 1: compute all numbers deterministically in Python ──────────────
+    computed = _compute_premium(
+        sum_insured=submission_data.sum_insured or Decimal("0"),
+        rates=rates,
+        risk_score=float(risk_assessment.risk_score),
+        security_features=list(submission_data.security_features),
+        year_built=submission_data.year_built,
+        excess_requested=submission_data.excess_requested,
+        mitigating_factors=list(risk_assessment.mitigating_factors),
+    )
+    logger.info(
+        "pricing_agent: deterministic computation complete  base=%s  final=%s  currency=%s",
+        computed["base_premium"], computed["final_premium"], computed["premium_currency"],
+    )
+
+    # ── Step 2: call LLM only for qualitative text fields ────────────────────
     prompt_template = PromptRegistry.load(AGENT_NAME)
     model = model_for(AGENT_NAME)
 
@@ -140,21 +225,26 @@ async def run(
         actuarial_table_version=ACTUARIAL_TABLE_VERSION,
     )
 
+    llm_text: dict = {}
     for attempt in range(1, MAX_RETRIES + 1):
         logger.info(
-            "pricing_agent: attempt %d/%d  submission=%s",
+            "pricing_agent: LLM rationale attempt %d/%d  submission=%s",
             attempt, MAX_RETRIES, submission_id,
         )
 
         response = await anthropic_client.messages.create(
             model=model,
-            max_tokens=2048,
+            max_tokens=1024,
             temperature=0,
             system=system_prompt,
             messages=[
                 {
                     "role": "user",
-                    "content": "Calculate the premium and produce the PricingOutput JSON.",
+                    "content": (
+                        "The premium numbers have already been calculated. "
+                        "Return ONLY a JSON object with these three fields: "
+                        '{"premium_rationale": "...", "policy_conditions": [...], "exclusions": [...]}'
+                    ),
                 }
             ],
         )
@@ -175,26 +265,32 @@ async def run(
             raw = "\n".join(lines[1:-1]).strip()
 
         try:
-            data = json.loads(_extract_first_json_object(raw))
-            data["submission_id"] = submission_id
-            data["actuarial_table_version"] = ACTUARIAL_TABLE_VERSION
-            # Drop unknown fields
-            allowed = PricingOutput.model_fields.keys()
-            data = {k: v for k, v in data.items() if k in allowed}
-            output = PricingOutput.model_validate(data)
-            logger.info(
-                "pricing_agent: success  final_premium=%s %s  method=%s",
-                output.final_premium, output.premium_currency, output.pricing_method,
-            )
-            return output
-
-        except (json.JSONDecodeError, ValidationError) as exc:
-            logger.warning(
-                "pricing_agent: attempt %d failed — %s: %s",
-                attempt, type(exc).__name__, exc,
-            )
+            llm_text = json.loads(_extract_first_json_object(raw))
+            break
+        except (json.JSONDecodeError, ValueError) as exc:
+            logger.warning("pricing_agent: rationale parse failed attempt %d — %s", attempt, exc)
             if attempt == MAX_RETRIES:
-                raise RuntimeError(
-                    f"pricing_agent failed after {MAX_RETRIES} attempts "
-                    f"for submission {submission_id}.\nLast error: {exc}\nResponse: {raw[:400]}"
-                ) from exc
+                llm_text = {}
+
+    # ── Step 3: merge computed numbers with LLM text ─────────────────────────
+    output = PricingOutput(
+        submission_id=submission_id,
+        base_premium=computed["base_premium"],
+        risk_loadings=[PremiumLoading(**l) for l in computed["risk_loadings"]],
+        claims_loadings=[],
+        discounts=[PremiumDiscount(**d) for d in computed["discounts"]],
+        final_premium=computed["final_premium"],
+        premium_currency=computed["premium_currency"],
+        excess_recommended=computed["excess_recommended"],
+        payment_options=[PaymentOption(**p) for p in computed["payment_options"]],
+        premium_rationale=llm_text.get("premium_rationale", ""),
+        policy_conditions=llm_text.get("policy_conditions", []),
+        exclusions=llm_text.get("exclusions", []),
+        actuarial_table_version=ACTUARIAL_TABLE_VERSION,
+        pricing_method="STANDARD",
+    )
+    logger.info(
+        "pricing_agent: success  final_premium=%s %s",
+        output.final_premium, output.premium_currency,
+    )
+    return output

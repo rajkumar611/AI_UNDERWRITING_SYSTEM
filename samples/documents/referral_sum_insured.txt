@@ -1,0 +1,74 @@
+COMMERCIAL PROPERTY INSURANCE SUBMISSION
+Auckland Corporate Brokers Ltd
+Level 18, 188 Quay Street, Auckland 1010
+Phone: +64 9 555 0600 | Email: corporate@aucklandcorp.co.nz
+
+Date: 14 April 2025
+Broker Reference: ACB-2025-1088
+Submission Reference: SUB-2025-01088
+
+================================================================
+INSURED DETAILS
+================================================================
+Insured Name:           Harbour Tower Commercial Properties Ltd
+NZBN:                   9429077788990
+Registered Address:     1 Wynyard Quarter, Auckland 1010, New Zealand
+Contact Person:         David Chen
+Contact Email:          d.chen@harbourtower.co.nz
+Contact Phone:          +64 9 555 0701
+
+================================================================
+RISK / PROPERTY DETAILS
+================================================================
+Risk Address:           1 Wynyard Quarter, Auckland 1010, New Zealand
+Construction Type:      Reinforced concrete and structural steel, glass curtain wall
+Year Built:             2019
+Number of Storeys:      22
+Gross Floor Area:       28,500 sqm
+Occupancy Type:         Mixed commercial — retail (floors 1-3), office (floors 4-22)
+Security Features:      Monitored alarm system, CCTV (120 cameras), biometric
+                        access control, sprinkler system throughout, dedicated
+                        fire control room, 24-hour security personnel
+
+================================================================
+COVERAGE REQUESTED
+================================================================
+Sum Insured:            NZD 52,000,000
+Coverage Type:          Material Damage and Business Interruption
+Policy Period Start:    01 June 2025
+Policy Period End:      01 June 2026
+Excess Requested:       NZD 100,000
+
+================================================================
+CLAIMS HISTORY (Self-declared, last 5 years)
+================================================================
+Number of Claims:       1
+Largest Single Loss:    NZD 45,000
+Description:            Claim 1 (February 2023) — Glass panel replacement on
+                        Level 7 facade following extreme wind event. Cost
+                        NZD 45,000. Fully settled.
+
+================================================================
+ADDITIONAL RISK INFORMATION
+================================================================
+The building is a premium grade-A commercial tower completed in 2019.
+Full IEP seismic assessment completed November 2024 (NBS: 95%).
+Annual facade inspection and fire systems audit are performed by
+certified contractors. No material changes to the building fabric
+or tenancy mix in the last 12 months.
+
+================================================================
+DOCUMENTS ATTACHED
+================================================================
+- Broker Submission Form (this document)
+- Property Valuation Report dated February 2025 (NZD 52,000,000)
+- IEP Seismic Assessment — November 2024 (NBS 95%)
+- Fire Systems Audit — December 2024
+- Site photographs (24 images)
+================================================================
+
+EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
+Reason: Sum insured NZD 52,000,000 exceeds the NZD 50,000,000 threshold.
+Pre-screen rule fires: auto-REFER regardless of risk profile.
+Underwriter must review and approve the high-value exposure manually.
+================================================================

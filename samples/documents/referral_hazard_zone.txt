@@ -1,0 +1,83 @@
+COMMERCIAL PROPERTY INSURANCE SUBMISSION
+Hawke's Bay Insurance Brokers Ltd
+Level 1, 18 Hastings Street, Napier 4110
+Phone: +64 6 555 0390 | Email: commercial@hbbrokers.co.nz
+
+Date: 7 April 2025
+Broker Reference: HBB-2025-0403
+Submission Reference: SUB-2025-00403
+
+================================================================
+INSURED DETAILS
+================================================================
+Insured Name:           Heretaunga Plains Produce Ltd
+NZBN:                   9429022233445
+Registered Address:     88 River Road, Clive, Hastings 4102, New Zealand
+Contact Person:         Mark Tūhoe
+Contact Email:          m.tuhoe@heretaungaproduce.co.nz
+Contact Phone:          +64 6 555 0288
+
+================================================================
+RISK / PROPERTY DETAILS
+================================================================
+Risk Address:           88 River Road, Clive, Hastings 4102, New Zealand
+Construction Type:      Concrete block, steel portal frame, corrugated iron roof
+Year Built:             2001
+Number of Storeys:      1
+Gross Floor Area:       5,600 sqm
+Occupancy Type:         Fruit packing and cool storage
+Security Features:      Monitored alarm system, CCTV (12 cameras), sprinkler
+                        system in packing area
+
+================================================================
+COVERAGE REQUESTED
+================================================================
+Sum Insured:            NZD 9,800,000
+Coverage Type:          Material Damage and Business Interruption
+Policy Period Start:    01 May 2025
+Policy Period End:      01 May 2026
+Excess Requested:       NZD 40,000
+
+================================================================
+CLAIMS HISTORY (Self-declared, last 5 years)
+================================================================
+Number of Claims:       1
+Largest Single Loss:    NZD 55,000
+Description:            Claim 1 (February 2023) — Flood inundation from the
+                        Tutaekuri River during Cyclone Gabrielle. Ground floor
+                        water damage to packing equipment and stock.
+                        Cost NZD 55,000. Settled.
+
+================================================================
+ADDITIONAL RISK INFORMATION
+================================================================
+The property is located in the Heretaunga Plains, Hawke's Bay.
+Following Cyclone Gabrielle (February 2023), the Hastings District
+Council has identified this area as a Category 2 flood risk zone
+(elevated risk — future habitation and land use under review).
+The property is approximately 400 metres from the Tutaekuri River
+stopbank. The insured has installed a flood barrier system (March
+2024, certified to 600mm inundation level) and raised critical
+electrical equipment above floor level. No liquefaction risk
+identified for this site (geotechnical report June 2023).
+
+================================================================
+DOCUMENTS ATTACHED
+================================================================
+- Broker Submission Form (this document)
+- Property Valuation Report dated February 2025 (NZD 9,800,000)
+- Hastings District Council flood zone classification letter
+- Flood barrier installation certificate — March 2024
+- Geotechnical Assessment — June 2023
+- Site photographs (20 images)
+================================================================
+
+EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
+Reason: Property is in a known flood risk zone (Hawke's Bay, post-Cyclone
+Gabrielle Category 2 classification). River Road proximity to Tutaekuri
+River stopbank will trigger elevated flood hazard scoring. Hazard evaluation
+agent will return HIGH flood risk, pushing AI confidence below 0.70.
+Underwriter should review the flood barrier measures and decide on
+conditions (e.g. flood exclusion clause, higher excess, mandatory annual
+flood barrier inspection).
+================================================================

@@ -583,6 +583,9 @@ elif page == "Underwriter Queue":
                     _show_risk_assessment(ra)
 
                 st.subheader("Your Decision")
+                dec_status = st.empty()
+                dec_progress = st.empty()
+
                 with st.form(key=f"decision_{item['queue_id']}"):
                     underwriter_id = st.text_input("Underwriter ID", value="UW-001")
                     action = st.selectbox(
@@ -615,8 +618,6 @@ elif page == "Underwriter Queue":
                     conditions = [c.strip() for c in conditions_raw.splitlines() if c.strip()]
                     exclusions = [e.strip() for e in exclusions_raw.splitlines() if e.strip()]
 
-                    dec_status = st.empty()
-                    dec_progress = st.empty()
                     dec_status.info("🔄  Step 1 of 2 — Calculating premium...")
                     dec_progress.progress(10)
 

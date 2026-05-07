@@ -1,0 +1,80 @@
+COMMERCIAL PROPERTY INSURANCE SUBMISSION
+Manawatu Business Brokers Ltd
+Level 1, 67 The Square, Palmerston North 4410
+Phone: +64 6 555 0250 | Email: business@manawatubrokers.co.nz
+
+Date: 8 April 2025
+Broker Reference: MBB-2025-0621
+Submission Reference: SUB-2025-00621
+
+================================================================
+INSURED DETAILS
+================================================================
+Insured Name:           Central Plains Logistics Ltd
+NZBN:                   9429033344556
+Registered Address:     22 Railway Road, Palmerston North 4410, New Zealand
+Contact Person:         Tom Hadley
+Contact Email:          t.hadley@cplogistics.co.nz
+Contact Phone:          +64 6 555 0319
+
+================================================================
+RISK / PROPERTY DETAILS
+================================================================
+Risk Address:           22 Railway Road, Palmerston North 4410, New Zealand
+Construction Type:      Concrete block, corrugated steel roof
+Year Built:             2005
+Number of Storeys:      1
+Gross Floor Area:       8,400 sqm
+Occupancy Type:         Warehousing and freight distribution
+Security Features:      Monitored alarm system, CCTV (16 cameras), perimeter
+                        fencing, automatic sprinkler system
+
+================================================================
+COVERAGE REQUESTED
+================================================================
+Sum Insured:            NZD 11,500,000
+Coverage Type:          Material Damage and Business Interruption
+Policy Period Start:    01 May 2025
+Policy Period End:      01 May 2026
+Excess Requested:       NZD 30,000
+
+================================================================
+CLAIMS HISTORY (Self-declared, last 5 years)
+================================================================
+Number of Claims:       4
+Largest Single Loss:    NZD 95,000
+Description:            Claim 1 (January 2025) — Forklift collision with
+                        racking system, structural damage to bay 3.
+                        Cost NZD 42,000. Settled.
+                        Claim 2 (August 2024) — Roof leak during heavy rainfall,
+                        water damage to stored goods. Cost NZD 95,000. Settled.
+                        Claim 3 (March 2024) — Electrical fault causing partial
+                        power outage and equipment damage. Cost NZD 38,000.
+                        Settled.
+                        Claim 4 (November 2022) — Minor roof repair after wind
+                        damage. Cost NZD 12,000. Settled.
+
+================================================================
+ADDITIONAL RISK INFORMATION
+================================================================
+The insured has engaged a risk management consultant following the
+2024 claims. Remedial works completed: roof replaced (October 2024),
+electrical system inspected and upgraded (November 2024). Forklift
+operator training programme introduced January 2025.
+
+================================================================
+DOCUMENTS ATTACHED
+================================================================
+- Broker Submission Form (this document)
+- Property Valuation Report dated March 2025 (NZD 11,500,000)
+- Roof replacement certificate — October 2024
+- Electrical upgrade certificate — November 2024
+- Site photographs (14 images)
+================================================================
+
+EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
+Reason: 3 claims in the last 3 years (Jan 2025, Aug 2024, Mar 2024) indicates
+elevated claim frequency. AI risk assessment will flag the pattern and return
+REFER. Underwriter should review the remediation steps and decide whether to
+approve with conditions (e.g. higher excess, annual inspection requirement).
+================================================================
