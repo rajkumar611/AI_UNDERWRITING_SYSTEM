@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -128,11 +128,12 @@ def _compute_premium(
         final = tech_min
     final = final.quantize(Decimal("0.01"))
 
-    if excess_requested and excess_requested > 0:
-        excess = excess_requested.quantize(Decimal("0.01"))
-    else:
-        std_pct = Decimal(str(rates.get("standard_excess_pct_sum_insured", 0.2)))
-        excess = (sum_insured * std_pct / 100).quantize(Decimal("1"))
+    # Excess = 10% of final premium, rounded to nearest 100 (min 100)
+    raw_excess = final * Decimal("0.10")
+    excess = max(
+        (raw_excess / Decimal("100")).to_integral_value(rounding=ROUND_HALF_UP) * Decimal("100"),
+        Decimal("100"),
+    )
 
     payment_options = [
         {"frequency": "ANNUAL", "instalment_amount": final, "total_amount": final},

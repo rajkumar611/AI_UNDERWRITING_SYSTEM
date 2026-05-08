@@ -2,38 +2,41 @@ from __future__ import annotations
 
 import pytest
 import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
-from main import app
-from underwriting.platform.database.connection import get_session
-from underwriting.platform.database.models import Base
 
 TEST_DATABASE_URL = "postgresql+asyncpg://qbe:localdev@localhost:5432/aus_underwriting_test"
 
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-TestSessionLocal = async_sessionmaker(bind=test_engine, class_=AsyncSession, expire_on_commit=False)
 
-
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session")
 async def setup_test_db():
-    async with test_engine.begin() as conn:
+    """Create and tear down the test database schema. Lazy — only runs when requested."""
+    from underwriting.platform.database.models import Base
+
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with test_engine.begin() as conn:
+    yield engine
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture
-async def db_session() -> AsyncSession:
-    async with TestSessionLocal() as session:
+async def db_session(setup_test_db) -> AsyncSession:
+    SessionLocal = async_sessionmaker(
+        bind=setup_test_db, class_=AsyncSession, expire_on_commit=False
+    )
+    async with SessionLocal() as session:
         yield session
         await session.rollback()
 
 
 @pytest_asyncio.fixture
-async def client(db_session: AsyncSession) -> AsyncClient:
+async def client(db_session: AsyncSession):
+    from httpx import ASGITransport, AsyncClient
+    from main import app
+    from underwriting.platform.database.connection import get_session
+
     async def override_get_session():
         yield db_session
 

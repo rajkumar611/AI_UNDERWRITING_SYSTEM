@@ -36,11 +36,13 @@ async def enqueue(
     risk_assessment: RiskAssessment,
     session: AsyncSession,
     workflow_id: str | None = None,
+    pipeline_state: dict | None = None,
 ) -> UnderwriterQueueItem:
     """
     Add a REFER case to the underwriter review queue.
     Called by the orchestration layer when risk_decision == REFER.
     Returns the queue item so the workflow can store its ID.
+    pipeline_state stores the full workflow state so resume works after server restart.
     """
     wf_id = uuid.UUID(workflow_id) if workflow_id else uuid.uuid4()
 
@@ -51,6 +53,7 @@ async def enqueue(
         sla_deadline=_sla_deadline(risk_assessment),
         status="PENDING",
         risk_assessment_snapshot=risk_assessment.model_dump(mode="json"),
+        pipeline_state_snapshot=pipeline_state,
     )
     session.add(item)
     await session.flush()

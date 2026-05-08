@@ -400,6 +400,7 @@ class UnderwriterQueueItem(Base):
     locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(String(32), default="PENDING")
     risk_assessment_snapshot: Mapped[dict | None] = mapped_column(JSONB)
+    pipeline_state_snapshot: Mapped[dict | None] = mapped_column(JSONB)
     decision: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

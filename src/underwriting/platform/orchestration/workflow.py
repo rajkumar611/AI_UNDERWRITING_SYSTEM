@@ -9,6 +9,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 from typing_extensions import TypedDict
 
+from underwriting.platform.progress_tracker import set_step
 from underwriting.pipeline.claims_history_agent import agent as claims_agent
 from underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
 from underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
@@ -48,6 +49,8 @@ class WorkflowState(TypedDict):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _needs_human_review(risk: RiskAssessment) -> bool:
+    if risk.risk_decision == "DECLINE":
+        return False
     return risk.risk_decision == "REFER" or risk.confidence_score < 0.70
 
 
@@ -73,6 +76,7 @@ async def parallel_analysis_node(state: WorkflowState) -> dict:
     cob = state["class_of_business"]
     jur = state["jurisdiction"]
 
+    set_step(sid, "parallel_analysis")
     logger.info("workflow: parallel_analysis started  submission=%s", sid)
 
     async with AsyncSessionLocal() as session:
@@ -111,6 +115,7 @@ async def underwriting_risk_node(state: WorkflowState) -> dict:
     hs = HazardScore(**state["hazard_score"])
     sid = state["submission_id"]
 
+    set_step(sid, "underwriting_risk")
     logger.info("workflow: underwriting_risk started  submission=%s", sid)
 
     async with AsyncSessionLocal() as session:
@@ -147,6 +152,14 @@ async def human_review_node(state: WorkflowState) -> dict:
             submission_id=sid,
             risk_assessment=risk,
             session=session,
+            pipeline_state={
+                "submission_data":   state["submission_data"],
+                "claim_profile":     state["claim_profile"],
+                "hazard_score":      state["hazard_score"],
+                "risk_assessment":   state["risk_assessment"],
+                "class_of_business": state["class_of_business"],
+                "jurisdiction":      state["jurisdiction"],
+            },
         )
         await session.commit()
         queue_id = str(queue_item.id)
@@ -201,6 +214,7 @@ async def pricing_node(state: WorkflowState) -> dict:
     risk = RiskAssessment(**state["risk_assessment"])
     uw = UnderwriterDecision(**state["underwriter_decision"])
 
+    set_step(sid, "pricing")
     logger.info("workflow: pricing started  submission=%s", sid)
 
     async with AsyncSessionLocal() as session:
@@ -222,6 +236,7 @@ async def pricing_node(state: WorkflowState) -> dict:
 async def governance_node(state: WorkflowState) -> dict:
     """Final validation of the full workflow chain."""
     sid = state["submission_id"]
+    set_step(sid, "governance")
     logger.info("workflow: governance started  submission=%s", sid)
 
     async with AsyncSessionLocal() as session:
@@ -349,6 +364,17 @@ async def run_pipeline(
     except Exception as exc:
         logger.error("workflow: pipeline failed  submission=%s  error=%s", submission_id, exc)
         raise
+
+    # LangGraph returns the checkpointed state when interrupt() fires.
+    # At that point no node has updated workflow_status, so it stays "RUNNING".
+    # Detect the paused state and set the correct status so callers and the DB
+    # can distinguish "still processing" from "waiting for underwriter".
+    if (
+        final.get("workflow_status") == "RUNNING"
+        and final.get("risk_assessment") is not None
+        and final.get("underwriter_decision") is None
+    ):
+        final["workflow_status"] = "AWAITING_HUMAN"
 
     logger.info(
         "workflow: run_pipeline finished  submission=%s  status=%s",
