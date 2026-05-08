@@ -5,8 +5,8 @@ Enterprise-grade multi-agent AI system for insurance underwriting. Built by Raj 
 QBE Insurance NZ) as a portfolio project targeting senior AI engineering roles in Singapore.
 
 **GitHub:** https://github.com/rajkumar611/AI_UNDERWRITING_SYSTEMS.git
-**Root:** C:\Users\QBE\Downloads\AI_UNDERWRITING_SYSTEMS
-**Local folder:** C:\Users\QBE\Downloads\qbe-ai-underwriting
+**Root:** C:\Users\QBE\Downloads\GitHub Repos\AI_UNDERWRTING_SYSTEM
+**Local folder:** C:\Users\QBE\Downloads\GitHub Repos\AI_UNDERWRTING_SYSTEM
 
 ## About the Developer
 - **Raj** — 15+ years IT experience, Lead Developer at QBE Insurance NZ since 2018
@@ -40,7 +40,7 @@ fully built and tested end-to-end.
 |---|---|---|---|
 | LLM Client | `llm/client.py` | DONE | Shared async Anthropic client + model routing |
 | Governance Agent | `governance_agent/agent.py` | DONE | Final gatekeeper — Claude Sonnet, 4096 tokens |
-| LangGraph Workflow | `orchestration/workflow.py` | DONE | StateGraph, MemorySaver, interrupt/resume for HITL |
+| LangGraph Workflow | `orchestration/workflow.py` | DONE | StateGraph, PostgresSaver (sync) checkpointer, interrupt/resume for HITL |
 | Cost Tracking | `cost_tracking/middleware.py` | DONE | Records token cost after every LLM call |
 | Cost Dashboard | `cost_tracking/dashboard.py` | DONE | Streamlit finance dashboard |
 | Cost Pricing | `cost_tracking/pricing.py` | DONE | Real cost calc from Anthropic token counts |
@@ -60,7 +60,7 @@ fully built and tested end-to-end.
 
 | File | Status |
 |---|---|
-| `alembic/versions/` | 4 migrations: 0001 initial, 0002 resize vector 1536→384, 0003 customers/policies/claims, 0004 submission extracted_data fields |
+| `alembic/versions/` | 5 migrations: 0001 initial, 0002 resize vector 1536→384, 0003 customers/policies/claims, 0004 submission extracted_data fields, 0005 queue pipeline_state_snapshot |
 | `scripts/seed_data.py` | 15 customers, 15 claims, 15 embeddings, 8 regulations |
 | `prompts/*/v1.0.md` | All 7 agent prompts versioned |
 | `tests/` | Schema tests, health + submission API tests |
@@ -89,11 +89,13 @@ uv run alembic upgrade head
 # 4. Seed the database
 uv run python scripts/seed_data.py
 
-# 5. Start the API (port 8081 — 8000/8080 may be occupied on this machine)
-uv run uvicorn main:app --port 8081
+# 5. Start the API (port 8081) — use the batch script to avoid Windows event loop issues
+start_api.bat
+# or: uv run python run.py
 
 # 6. Start the Streamlit UI (separate terminal)
-uv run streamlit run streamlit_app.py
+start_streamlit.bat
+# or: set VIRTUAL_ENV= && uv run streamlit run streamlit_app.py
 
 # 7. Run tests
 uv run pytest
@@ -138,7 +140,9 @@ MODEL_FOR_AGENT = {
 - Nodes: `parallel_analysis` → `underwriting_risk` → routing → `human_review` / `auto_approve` → `pricing` → `governance` / `decline`
 - `parallel_analysis_node` runs claims + hazard via `asyncio.gather()`
 - `human_review_node` calls `interrupt()` to pause; resumes via `Command(resume=...)` when underwriter submits decision
-- `MemorySaver` checkpointer — thread_id == submission_id, enabling cross-request pause/resume
+- **Checkpointer: `PostgresSaver` (sync) + `ConnectionPool` (psycopg_pool sync)** — thread_id == submission_id
+  - Uses sync psycopg3 driver to avoid Windows `ProactorEventLoop` incompatibility with async psycopg3
+  - LangGraph dispatches sync checkpoint calls via thread pool executor automatically
 - Public API: `run_pipeline()` and `resume_pipeline()`
 
 ### Embeddings & RAG
@@ -174,7 +178,11 @@ Fires before any LLM call:
 ```
 AI_UNDERWRITING_SYSTEMS/
 ├── main.py                            ← FastAPI entry point
+├── run.py                             ← Windows launcher (sets SelectorEventLoop before uvicorn)
+├── start_api.bat                      ← Demo launcher: clears VIRTUAL_ENV + starts API
+├── start_streamlit.bat                ← Demo launcher: clears VIRTUAL_ENV + starts Streamlit
 ├── streamlit_app.py                   ← Underwriter UI (Submit, Queue, Lookup)
+├── README.md                          ← Comprehensive technical README (generated)
 ├── pyproject.toml
 ├── alembic.ini
 ├── docker-compose.yml
@@ -202,7 +210,7 @@ AI_UNDERWRITING_SYSTEMS/
 │       └── api/
 │           └── routers/               health.py ✓  submissions.py ✓  pipeline.py ✓
 │
-├── alembic/versions/   0001 ✓  0002 ✓  0003 ✓  0004 ✓
+├── alembic/versions/   0001 ✓  0002 ✓  0003 ✓  0004 ✓  0005 ✓
 ├── scripts/            seed_data.py ✓  run_ingestion.py ✓
 ├── prompts/            all 7 agents v1.0.md ✓
 ├── samples/documents/  4 sample broker docs ✓
@@ -257,15 +265,15 @@ Cross-cutting (every agent):
 
 ## Import Convention
 ```python
-from qbe_underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
-from qbe_underwriting.platform.database.models import Submission, Customer, Claim
-from qbe_underwriting.platform.database.connection import get_session
-from qbe_underwriting.platform.orchestration.prompt_registry import PromptRegistry
-from qbe_underwriting.platform.orchestration.workflow import run_pipeline, resume_pipeline
+from underwriting.pipeline.document_ingestion_agent.schemas import SubmissionData
+from underwriting.platform.database.models import Submission, Customer, Claim
+from underwriting.platform.database.connection import get_session
+from underwriting.platform.orchestration.prompt_registry import PromptRegistry
+from underwriting.platform.orchestration.workflow import run_pipeline, resume_pipeline
 ```
 
 ---
 
 ## Session Recovery
 If session is lost, tell Claude: **"check memory"**
-Memory files: `C:\Users\QBE\.claude\projects\c--Users-QBE-Downloads-qbe-ai-underwriting\memory\`
+Memory files: `C:\Users\QBE\.claude\projects\c--Users-QBE-Downloads-GitHub-Repos-AI-UNDERWRTING-SYSTEM\memory\`
