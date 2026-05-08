@@ -4,10 +4,10 @@ import asyncio
 import logging
 from typing import Literal
 
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
-from psycopg_pool import AsyncConnectionPool
+from psycopg_pool import ConnectionPool
 from typing_extensions import TypedDict
 
 from underwriting.platform.progress_tracker import set_step
@@ -332,7 +332,7 @@ def _build_graph() -> StateGraph:
     return g
 
 
-_pool: AsyncConnectionPool | None = None
+_pool: ConnectionPool | None = None
 graph = None
 
 
@@ -340,15 +340,14 @@ async def init_workflow(db_url: str) -> None:
     """Call once at app startup to wire up the Postgres checkpointer."""
     global _pool, graph
     pg_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
-    _pool = AsyncConnectionPool(
+    _pool = ConnectionPool(
         conninfo=pg_url,
         max_size=5,
         kwargs={"autocommit": True, "prepare_threshold": 0},
-        open=False,
+        open=True,
     )
-    await _pool.open()
-    checkpointer = AsyncPostgresSaver(_pool)
-    await checkpointer.setup()
+    checkpointer = PostgresSaver(_pool)
+    checkpointer.setup()
     graph = _build_graph().compile(checkpointer=checkpointer)
     logger.info("workflow: Postgres checkpointer ready")
 
@@ -357,7 +356,7 @@ async def close_workflow() -> None:
     """Call at app shutdown to close the connection pool."""
     global _pool
     if _pool:
-        await _pool.close()
+        _pool.close()
         logger.info("workflow: connection pool closed")
 
 
