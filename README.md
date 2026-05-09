@@ -670,7 +670,6 @@ PostgreSQL 17 + pgvector, managed via Alembic migrations with async SQLAlchemy 2
 | LLM Models | Claude Haiku 4.5, Claude Sonnet 4.6 | — |
 | Workflow Orchestration | LangGraph StateGraph | `langgraph >= 0.2.0` |
 | LangGraph Checkpointing | PostgresSaver (sync psycopg3) | built into `langgraph` |
-| LangChain Anthropic | langchain-anthropic | `>= 0.3.0` |
 | Embeddings | sentence-transformers all-MiniLM-L6-v2 | `sentence-transformers >= 3.0.0` |
 | Vector Database | pgvector (PostgreSQL extension) | `pgvector >= 0.3.0` |
 
