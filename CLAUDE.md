@@ -45,6 +45,8 @@ fully built and tested end-to-end.
 | Cost Dashboard | `cost_tracking/dashboard.py` | DONE | Streamlit finance dashboard |
 | Cost Pricing | `cost_tracking/pricing.py` | DONE | Real cost calc from Anthropic token counts |
 | Prompt Registry | `orchestration/prompt_registry.py` | DONE | Versioned prompts, `{{VAR}}` rendering, cached |
+| Audit Writer | `audit/writer.py` | DONE | Hash-chained append-only decision logger |
+| Progress Tracker | `progress_tracker.py` | DONE | Real-time pipeline step tracking |
 
 ### API & UI
 
@@ -64,11 +66,10 @@ fully built and tested end-to-end.
 | `scripts/seed_data.py` | 15 customers, 15 claims, 15 embeddings, 8 regulations |
 | `prompts/*/v1.0.md` | All 7 agent prompts versioned |
 | `tests/` | Schema tests, health + submission API tests |
-| `samples/documents/*.txt` | 4 broker sample docs (happy path, high risk, missing fields, prompt injection) |
+| `samples/documents/*.txt` | 7 broker sample docs (auto-approve, 2 decline, 4 referral scenarios) |
 
 ### Still to build (optional enhancements)
 - `platform/security/sanitiser.py` — code-level prompt injection filter (currently handled in LLM prompt)
-- `platform/observability/audit_writer.py` — append-only decision logger / OpenTelemetry
 
 ---
 
@@ -78,7 +79,7 @@ fully built and tested end-to-end.
 # Prerequisites: Docker Desktop running, Python 3.12+, uv installed
 
 # 1. Start infrastructure
-docker compose up postgres redis -d
+docker compose up postgres -d
 
 # 2. Install dependencies
 uv sync
@@ -114,6 +115,8 @@ uv run pytest
 | GET | `/health` | Health check |
 | POST | `/api/v1/submissions` | Create submission record |
 | GET | `/api/v1/submissions/{id}` | Get submission by ID |
+| GET | `/api/v1/submissions/{id}/progress` | Real-time pipeline progress |
+| POST | `/api/v1/submissions/ingest` | Document ingestion only (no workflow) |
 | POST | `/api/v1/submissions/pipeline` | Ingest document + run full pipeline |
 | GET | `/api/v1/queue` | List pending underwriter queue items |
 | GET | `/api/v1/queue/{queue_id}` | Get queue item with full submission details |
@@ -190,7 +193,7 @@ AI_UNDERWRITING_SYSTEMS/
 ├── .env / .env.example
 │
 ├── src/
-│   └── qbe_underwriting/
+│   └── underwriting/
 │       ├── pipeline/
 │       │   ├── document_ingestion_agent/   schemas.py ✓  agent.py ✓
 │       │   ├── claims_history_agent/       schemas.py ✓  agent.py ✓
@@ -202,18 +205,18 @@ AI_UNDERWRITING_SYSTEMS/
 │       │   ├── database/              models.py ✓  connection.py ✓
 │       │   ├── orchestration/         prompt_registry.py ✓  workflow.py ✓
 │       │   ├── governance_agent/      schemas.py ✓  agent.py ✓
-│       │   ├── compliance_agent/      schemas.py ✓  (agent.py not yet built)
-│       │   ├── llm/                   client.py ✓
+│       │   ├── llm/                   client.py ✓  parsing.py ✓
 │       │   ├── cost_tracking/         pricing.py ✓  middleware.py ✓  dashboard.py ✓
-│       │   ├── security/              (sanitiser.py not yet built)
-│       │   └── observability/         (audit_writer.py not yet built)
+│       │   ├── audit/                 writer.py ✓  (hash-chained audit trail)
+│       │   ├── progress_tracker.py ✓  (real-time pipeline step tracking)
+│       │   └── security/              (sanitiser.py not yet built)
 │       └── api/
 │           └── routers/               health.py ✓  submissions.py ✓  pipeline.py ✓
 │
 ├── alembic/versions/   0001 ✓  0002 ✓  0003 ✓  0004 ✓  0005 ✓
 ├── scripts/            seed_data.py ✓  run_ingestion.py ✓
 ├── prompts/            all 7 agents v1.0.md ✓
-├── samples/documents/  4 sample broker docs ✓
+├── samples/documents/  7 sample broker docs ✓
 └── tests/              conftest ✓  api ✓  pipeline ✓  platform ✓
 ```
 
@@ -237,7 +240,7 @@ underwriting_risk_agent       ← pre-screen rules → Claude Sonnet synthesis �
   ↓
   ├─ DECLINE → decline_node → workflow_status = DECLINED
   ├─ ACCEPT (confidence ≥ 0.70) → auto_approve_node → pricing → governance
-  └─ REFER / low confidence → human_review_node → interrupt() → workflow_status = RUNNING
+  └─ REFER / low confidence → human_review_node → interrupt() → workflow_status = AWAITING_HUMAN
                                     ↓
                               POST /api/v1/queue/{id}/decision
                                     ↓
