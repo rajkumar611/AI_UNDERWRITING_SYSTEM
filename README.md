@@ -361,8 +361,8 @@ START
 ### Checkpointing
 
 ```python
-checkpointer = PostgresSaver(
-    ConnectionPool(
+checkpointer = AsyncPostgresSaver(
+    AsyncConnectionPool(
         conninfo=DATABASE_URL,
         max_size=5,
         open=False,
@@ -373,7 +373,7 @@ graph = workflow.compile(checkpointer=checkpointer)
 
 `thread_id = submission_id` — every submission has its own checkpoint thread. This enables cross-request pause/resume: the API server can restart between the initial submission and the underwriter's decision, and the workflow resumes correctly.
 
-The checkpointer uses the **sync `psycopg3` driver** (not async) to avoid Windows `ProactorEventLoop` incompatibility with the async psycopg3 driver. LangGraph dispatches sync checkpoint calls via a thread pool executor automatically.
+The checkpointer uses `AsyncPostgresSaver` with `AsyncConnectionPool` (async psycopg3). On Windows, the API must be started via `run.py` (or `start_api.bat`) which sets `WindowsSelectorEventLoopPolicy` before uvicorn creates its event loop — psycopg3 async mode is incompatible with the Windows-default `ProactorEventLoop`.
 
 ---
 
@@ -613,6 +613,7 @@ PostgreSQL 17 + pgvector, managed via Alembic migrations with async SQLAlchemy 2
 | `0003_customers_policies_claims` | Adds `customers`, `policies`, `claims` with FK relationships |
 | `0004_submission_extracted_data` | Adds `extracted_data`, `ingestion_confidence`, `ingestion_anomalies`, `missing_fields` to `submissions` |
 | `0005_queue_pipeline_state` | Adds `pipeline_state_snapshot JSONB` to `underwriter_queue` for full HITL context |
+| `0006_widen_prompt_version` | Widens `prompt_version` from `VARCHAR(16)` to `VARCHAR(64)` in `audit_trail` and `cost_ledger` |
 
 ---
 
@@ -756,10 +757,13 @@ uv run alembic upgrade head
 uv run python scripts/seed_data.py
 
 # 7. Start the API server (port 8081)
-uv run uvicorn main:app --port 8081 --reload
+#    run.py sets WindowsSelectorEventLoopPolicy before uvicorn starts (required on Windows)
+uv run python run.py
+# or use the batch script:  start_api.bat
 
 # 8. Start the Underwriter UI (separate terminal)
 uv run streamlit run streamlit_app.py --server.port 8502
+# or use the batch script:  start_streamlit.bat
 
 # The Cost Dashboard is built into the Underwriter UI — no separate command needed.
 # Access it via the "LLM Cost Dashboard" page in the sidebar.
@@ -821,7 +825,10 @@ Seven broker documents in `samples/documents/` exercise each pipeline path:
 ```
 AI_UNDERWRITING_SYSTEMS/
 ├── main.py                                    FastAPI entry point + router wiring
-├── streamlit_app.py                           Underwriter UI (Submit · Queue · Lookup)
+├── run.py                                     Windows launcher — sets SelectorEventLoop before uvicorn
+├── start_api.bat                              Batch script: clears VIRTUAL_ENV + runs run.py
+├── start_streamlit.bat                        Batch script: clears VIRTUAL_ENV + runs Streamlit
+├── streamlit_app.py                           Underwriter UI (Submit · Queue · Lookup · Cost Dashboard)
 ├── pyproject.toml                             Dependencies managed by uv
 ├── docker-compose.yml                         PostgreSQL 17 + pgvector
 ├── Dockerfile
@@ -859,7 +866,8 @@ AI_UNDERWRITING_SYSTEMS/
 │       │   ├── agent.py                       Final compliance gate — Sonnet 4096 tokens
 │       │   └── schemas.py                     GovernanceDecision
 │       ├── llm/
-│       │   └── client.py                      Shared AsyncAnthropic + model routing table
+│       │   ├── client.py                      Shared AsyncAnthropic + model routing table
+│       │   └── parsing.py                     JSON extraction helpers (strip fences, first-object)
 │       ├── cost_tracking/
 │       │   ├── pricing.py                     Token to USD conversion per model
 │       │   ├── middleware.py                  Per-call cost recorder
@@ -867,20 +875,32 @@ AI_UNDERWRITING_SYSTEMS/
 │       ├── audit/
 │       │   └── writer.py                      Hash-chained audit trail writer
 │       ├── progress_tracker.py                Real-time pipeline step tracking
-│       └── security/                          sanitiser.py (planned)
+│       └── security/                          sanitiser.py (not yet built — injection handled in LLM prompt)
 │
 │   └── api/routers/
 │       ├── health.py                          GET /health
 │       ├── submissions.py                     POST + GET /api/v1/submissions
 │       └── pipeline.py                        Pipeline + queue endpoints
 │
-├── alembic/versions/                          5 migrations (0001-0005)
+├── alembic/versions/                          6 migrations (0001-0006)
 ├── prompts/                                   7 agent prompt files v1.0.md
 ├── samples/documents/                         7 broker test documents
 ├── scripts/
-│   ├── seed_data.py                           15 customers · 15 claims · 15 embeddings
-│   └── run_ingestion.py                       CLI ingestion runner
+│   ├── seed_data.py                           15 customers · 15 claims · 15 embeddings · 8 regulations
+│   ├── run_ingestion.py                       CLI ingestion runner
+│   └── check_db.py                            DB connectivity and table inspection utility
+├── evals/
+│   ├── run_evals.py                           Pipeline evaluation runner
+│   └── scenarios.py                           Evaluation scenario definitions
 └── tests/                                     API · pipeline · platform test suites
+    ├── api/test_health.py
+    ├── api/test_submissions.py
+    ├── api/test_pipeline.py
+    ├── api/test_e2e_pipeline.py
+    ├── pipeline/test_pricing.py
+    ├── pipeline/test_schemas.py
+    ├── platform/test_schemas.py
+    └── platform/test_workflow_routing.py
 ```
 
 ---
@@ -902,7 +922,7 @@ Jurisdiction is passed with every submission and propagates through the entire w
 |----------|-----------|
 | Deterministic pre-screening | Rules that can be expressed as boolean logic should never depend on LLM output — eliminates variance and reduces cost by 60-80% on clear-cut cases |
 | pgvector over a dedicated vector DB | PostgreSQL already manages policy and claims data; keeping vectors in the same database eliminates a network hop and a consistency boundary |
-| MemorySaver replaced by AsyncPostgresSaver | Production HITL requires durable checkpoints that survive server restarts; in-memory checkpoints cannot support cross-request resume |
+| MemorySaver replaced by AsyncPostgresSaver | Production HITL requires durable checkpoints that survive server restarts; in-memory checkpoints cannot support cross-request resume. AsyncPostgresSaver + AsyncConnectionPool used with WindowsSelectorEventLoopPolicy on Windows. |
 | Haiku for extraction, Sonnet for reasoning | Extraction is a high-volume, structured task; reasoning about risk requires deeper context — routing by task type reduces per-submission cost by ~50% vs. using Sonnet throughout |
 | asyncio.gather for parallel agents | Claims and hazard evaluation are independent read operations; parallelism halves wall-clock time for the most latency-sensitive pipeline stage |
 | All numeric calculations in Python | Pricing, risk scoring, and confidence formulas must be reproducible and auditable; LLM arithmetic is non-deterministic, Python arithmetic is exact |
