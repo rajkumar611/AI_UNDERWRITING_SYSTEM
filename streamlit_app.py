@@ -306,14 +306,19 @@ def page_submit_document():
         ("pipeline_params", None),
         ("pipeline_submission_id", None),
         ("form_version", 0),
+        ("pipeline_result_shown", False),
     ]:
         if _k not in st.session_state:
             st.session_state[_k] = _v
 
-    # Clear stale results from a previous run whenever the page loads fresh
-    if not st.session_state.pipeline_running:
+    # Clear stale results when user navigates back after already viewing them
+    if (
+        not st.session_state.pipeline_running
+        and st.session_state.pipeline_result_shown
+    ):
         st.session_state.pipeline_result = None
         st.session_state.pipeline_error = None
+        st.session_state.pipeline_result_shown = False
 
     running = st.session_state.pipeline_running
     top_status = st.empty()
@@ -514,10 +519,12 @@ def page_submit_document():
                 with st.expander("🩵 6. Governance Decision", expanded=True):
                     _show_governance(result["governance_decision"])
 
+        st.session_state.pipeline_result_shown = True
         st.divider()
         if st.button("Submit Another Document", use_container_width=False):
             st.session_state.pipeline_result = None
             st.session_state.pipeline_error = None
+            st.session_state.pipeline_result_shown = False
             st.rerun()
 
 
