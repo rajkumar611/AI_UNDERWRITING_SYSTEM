@@ -55,14 +55,14 @@ fully built and tested end-to-end.
 | `src/underwriting/api/routers/health.py` | DONE | GET /health |
 | `src/underwriting/api/routers/submissions.py` | DONE | POST + GET /api/v1/submissions |
 | `src/underwriting/api/routers/pipeline.py` | DONE | Full pipeline + queue endpoints |
-| `streamlit_app.py` | DONE | Multi-page UI: Submit Document, Queue, Submission Lookup |
+| `streamlit_app.py` | DONE | Multi-page UI: Submit Document, Queue, Submission Lookup, LLM Cost Dashboard |
 | `main.py` | DONE | FastAPI app wiring all routers |
 
 ### Infrastructure
 
 | File | Status |
 |---|---|
-| `alembic/versions/` | 5 migrations: 0001 initial, 0002 resize vector 1536→384, 0003 customers/policies/claims, 0004 submission extracted_data fields, 0005 queue pipeline_state_snapshot |
+| `alembic/versions/` | 6 migrations: 0001 initial, 0002 resize vector 1536→384, 0003 customers/policies/claims, 0004 submission extracted_data fields, 0005 queue pipeline_state_snapshot, 0006 widen prompt_version VARCHAR(16→64) |
 | `scripts/seed_data.py` | 15 customers, 15 claims, 15 embeddings, 8 regulations |
 | `prompts/*/v1.0.md` | All 7 agent prompts versioned |
 | `tests/` | Schema tests, health + submission API tests |
@@ -103,7 +103,7 @@ uv run pytest
 
 # API docs:      http://localhost:8081/docs
 # Streamlit UI:  http://localhost:8502
-# Cost dashboard: uv run streamlit run src/underwriting/platform/cost_tracking/dashboard.py
+# Cost dashboard: built into Streamlit UI — sidebar page "LLM Cost Dashboard"
 ```
 
 ---
@@ -131,13 +131,14 @@ uv run pytest
 ### LLM Model Routing (live in `platform/llm/client.py`)
 ```python
 MODEL_FOR_AGENT = {
-    "document_ingestion_agent": "claude-haiku-4-5-20251001",
-    "claims_history_agent":     "claude-haiku-4-5-20251001",
-    "hazard_evaluation_agent":  "claude-sonnet-4-6",
-    "underwriting_risk_agent":  "claude-sonnet-4-6",
-    "governance_agent":         "claude-sonnet-4-6",
-    "pricing_agent":            "claude-haiku-4-5-20251001",
+    "document_ingestion_agent": os.getenv("MODEL_INGESTION",  "claude-haiku-4-5-20251001"),
+    "claims_history_agent":     os.getenv("MODEL_CLAIMS",     "claude-haiku-4-5-20251001"),
+    "hazard_evaluation_agent":  os.getenv("MODEL_HAZARD",     "claude-sonnet-4-6"),
+    "underwriting_risk_agent":  os.getenv("MODEL_RISK",       "claude-sonnet-4-6"),
+    "governance_agent":         os.getenv("MODEL_GOVERNANCE", "claude-sonnet-4-6"),
+    "pricing_agent":            os.getenv("MODEL_PRICING",    "claude-haiku-4-5-20251001"),
 }
+# Each model is overridable via env var: MODEL_INGESTION, MODEL_CLAIMS, MODEL_HAZARD, etc.
 ```
 
 ### LangGraph Workflow (`platform/orchestration/workflow.py`)
@@ -145,9 +146,9 @@ MODEL_FOR_AGENT = {
 - Nodes: `parallel_analysis` → `underwriting_risk` → routing → `human_review` / `auto_approve` → `pricing` → `governance` / `decline`
 - `parallel_analysis_node` runs claims + hazard via `asyncio.gather()`
 - `human_review_node` calls `interrupt()` to pause; resumes via `Command(resume=...)` when underwriter submits decision
-- **Checkpointer: `PostgresSaver` (sync) + `ConnectionPool` (psycopg_pool sync)** — thread_id == submission_id
-  - Uses sync psycopg3 driver to avoid Windows `ProactorEventLoop` incompatibility with async psycopg3
-  - LangGraph dispatches sync checkpoint calls via thread pool executor automatically
+- **Checkpointer: `AsyncPostgresSaver` + `AsyncConnectionPool` (psycopg_pool async)** — thread_id == submission_id
+  - Uses async psycopg3 driver; Windows `ProactorEventLoop` incompatibility is fixed by `run.py` setting `WindowsSelectorEventLoopPolicy` before uvicorn creates its event loop
+  - Always start the API via `start_api.bat` or `uv run python run.py` — never `uvicorn main:app` directly on Windows
 - Public API: `run_pipeline()` and `resume_pipeline()`
 
 ### Embeddings & RAG
@@ -167,7 +168,7 @@ Fires before any LLM call:
 
 ### Database
 - PostgreSQL 17 + pgvector via Docker
-- `DATABASE_URL=postgresql+asyncpg://qbe:localdev@localhost:5432/qbe_underwriting`
+- `DATABASE_URL=postgresql+asyncpg://qbe:localdev@localhost:5432/aus_underwriting`
 - Async SQLAlchemy 2.0 with `mapped_column` / `Mapped` syntax
 - Each LangGraph node creates its own DB session (not passed through state)
 
@@ -215,8 +216,9 @@ AI_UNDERWRITING_SYSTEMS/
 │       └── api/
 │           └── routers/               health.py ✓  submissions.py ✓  pipeline.py ✓
 │
-├── alembic/versions/   0001 ✓  0002 ✓  0003 ✓  0004 ✓  0005 ✓
-├── scripts/            seed_data.py ✓  run_ingestion.py ✓
+├── alembic/versions/   0001 ✓  0002 ✓  0003 ✓  0004 ✓  0005 ✓  0006 ✓
+├── scripts/            seed_data.py ✓  run_ingestion.py ✓  check_db.py ✓
+├── evals/              run_evals.py ✓  scenarios.py ✓
 ├── prompts/            all 7 agents v1.0.md ✓
 ├── samples/documents/  7 sample broker docs ✓
 └── tests/              conftest ✓  api ✓  pipeline ✓  platform ✓
