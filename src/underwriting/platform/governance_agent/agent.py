@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from underwriting.pipeline.claims_history_agent.schemas import ClaimProfile
@@ -14,6 +16,7 @@ from underwriting.pipeline.pricing_agent.schemas import PricingOutput
 from underwriting.pipeline.underwriting_risk_agent.schemas import RiskAssessment
 from underwriting.platform.audit.writer import record_agent_decision
 from underwriting.platform.cost_tracking.middleware import record_llm_cost
+from underwriting.platform.database.models import Regulation
 from underwriting.platform.governance_agent.schemas import GovernanceDecision
 from underwriting.platform.llm.client import anthropic_client, model_for
 from underwriting.platform.llm.parsing import extract_first_json_object
@@ -24,6 +27,30 @@ logger = logging.getLogger(__name__)
 AGENT_NAME = "governance_agent"
 COMPLIANCE_RULES_VERSION = "AI-UW-COMPLIANCE-NZ-AU-2024-v1"
 MAX_RETRIES = 2
+
+
+async def _fetch_regulations(
+    session: AsyncSession,
+    jurisdiction: str,
+    class_of_business: str,
+) -> str:
+    now = datetime.now(timezone.utc)
+    result = await session.execute(
+        select(Regulation).where(
+            Regulation.jurisdiction == jurisdiction,
+            Regulation.class_of_business == class_of_business,
+            Regulation.effective_date <= now,
+            (Regulation.expiry_date == None) | (Regulation.expiry_date > now),  # noqa: E711
+        )
+    )
+    rules = result.scalars().all()
+    if not rules:
+        return "No active regulations found for this jurisdiction and class of business."
+    lines = []
+    for r in rules:
+        lines.append(f"[{r.rule_code} v{r.version}] {r.rule_description}")
+        lines.append(f"  Regulator: {r.regulator}  |  Data: {json.dumps(r.rule_data)}")
+    return "\n".join(lines)
 
 
 async def run(
@@ -49,6 +76,8 @@ async def run(
     prompt_template = PromptRegistry.load(AGENT_NAME)
     model = model_for(AGENT_NAME)
 
+    active_regulations = await _fetch_regulations(session, jurisdiction, class_of_business)
+
     system_prompt = prompt_template.render(
         submission_id=submission_id,
         submission_data=json.dumps(submission_data.model_dump(mode="json"), indent=2),
@@ -58,6 +87,7 @@ async def run(
         underwriter_decision=json.dumps(underwriter_decision.model_dump(mode="json"), indent=2),
         pricing_output=json.dumps(pricing_output.model_dump(mode="json"), indent=2),
         compliance_rules_version=COMPLIANCE_RULES_VERSION,
+        active_regulations=active_regulations,
     )
 
     for attempt in range(1, MAX_RETRIES + 1):
