@@ -310,6 +310,11 @@ def page_submit_document():
         if _k not in st.session_state:
             st.session_state[_k] = _v
 
+    # Clear stale results from a previous run whenever the page loads fresh
+    if not st.session_state.pipeline_running:
+        st.session_state.pipeline_result = None
+        st.session_state.pipeline_error = None
+
     running = st.session_state.pipeline_running
     top_status = st.empty()
     top_progress = st.empty()
