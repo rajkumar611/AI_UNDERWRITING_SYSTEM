@@ -211,6 +211,7 @@ The primary decision agent. Runs a **deterministic pre-screen before any LLM cal
 | `hazard_level == EXTREME` AND `total_claims_3yr > 2` | **DECLINE** · `risk_score=0.95` |
 | `"FRAUD_SUSPICION"` in `claim_profile.risk_flags` | **DECLINE** · `risk_score=0.95` |
 | `sum_insured > NZD/AUD 50,000,000` | **REFER** · `risk_score=0.80` |
+| `claim_data_quality == "LOW"` | **REFER** · `risk_score=0.80` |
 | `hazard_score.confidence < 0.50` | **REFER** · `risk_score=0.80` |
 | `extraction_confidence == "low"` | **REFER** · `risk_score=0.80` |
 
@@ -352,18 +353,19 @@ START
 ### Checkpointing
 
 ```python
-checkpointer = AsyncPostgresSaver(
-    AsyncConnectionPool(
+checkpointer = PostgresSaver(
+    ConnectionPool(
         conninfo=DATABASE_URL,
         max_size=5,
-        autocommit=True,
-        prepare_threshold=0,
+        open=False,
     )
 )
 graph = workflow.compile(checkpointer=checkpointer)
 ```
 
 `thread_id = submission_id` — every submission has its own checkpoint thread. This enables cross-request pause/resume: the API server can restart between the initial submission and the underwriter's decision, and the workflow resumes correctly.
+
+The checkpointer uses the **sync `psycopg3` driver** (not async) to avoid Windows `ProactorEventLoop` incompatibility with the async psycopg3 driver. LangGraph dispatches sync checkpoint calls via a thread pool executor automatically.
 
 ---
 
@@ -610,10 +612,11 @@ PostgreSQL 17 + pgvector, managed via Alembic migrations with async SQLAlchemy 2
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Health check — DB connectivity, Redis status |
+| `GET` | `/health` | Health check — DB connectivity |
 | `POST` | `/api/v1/submissions` | Create submission record (no pipeline) |
 | `GET` | `/api/v1/submissions/{id}` | Fetch submission by UUID |
 | `GET` | `/api/v1/submissions/{id}/progress` | Real-time pipeline progress |
+| `POST` | `/api/v1/submissions/ingest` | Document ingestion only — no workflow started |
 | `POST` | `/api/v1/submissions/pipeline` | Full pipeline — ingest + LangGraph workflow |
 | `GET` | `/api/v1/queue` | List pending underwriter queue items (paginated) |
 | `GET` | `/api/v1/queue/{queue_id}` | Full queue item with submission and risk details |
@@ -666,7 +669,7 @@ PostgreSQL 17 + pgvector, managed via Alembic migrations with async SQLAlchemy 2
 | LLM Provider | Anthropic Claude API | `anthropic >= 0.40.0` |
 | LLM Models | Claude Haiku 4.5, Claude Sonnet 4.6 | — |
 | Workflow Orchestration | LangGraph StateGraph | `langgraph >= 0.2.0` |
-| LangGraph Checkpointing | AsyncPostgresSaver | `langgraph-checkpoint-postgres >= 3.0.5` |
+| LangGraph Checkpointing | PostgresSaver (sync psycopg3) | built into `langgraph` |
 | LangChain Anthropic | langchain-anthropic | `>= 0.3.0` |
 | Embeddings | sentence-transformers all-MiniLM-L6-v2 | `sentence-transformers >= 3.0.0` |
 | Vector Database | pgvector (PostgreSQL extension) | `pgvector >= 0.3.0` |
@@ -689,7 +692,6 @@ PostgreSQL 17 + pgvector, managed via Alembic migrations with async SQLAlchemy 2
 | Component | Technology |
 |-----------|-----------|
 | Database | PostgreSQL 17 + pgvector extension |
-| Cache / Queue | Redis |
 | Containerisation | Docker Compose |
 | Logging | structlog |
 | Observability | OpenTelemetry (`>= 1.29.0`) |
@@ -734,8 +736,8 @@ cd AI_UNDERWRITING_SYSTEMS
 cp .env.example .env
 # Set ANTHROPIC_API_KEY in .env
 
-# 3. Start PostgreSQL and Redis
-docker compose up postgres redis -d
+# 3. Start PostgreSQL
+docker compose up postgres -d
 
 # 4. Install dependencies
 uv sync
@@ -793,7 +795,7 @@ uv run pytest tests/platform/
 
 ## Sample Documents
 
-Four broker documents in `samples/documents/` exercise each pipeline path:
+Seven broker documents in `samples/documents/` exercise each pipeline path:
 
 | File | Scenario | Expected Outcome |
 |------|----------|-----------------|
@@ -801,6 +803,9 @@ Four broker documents in `samples/documents/` exercise each pipeline path:
 | `decline_prompt_injection.txt` | Contains "IGNORE ALL PREVIOUS INSTRUCTIONS", "unrestricted mode", "[SYSTEM OVERRIDE]" | `DECLINED` · `decline_reason=PROMPT_INJECTION` · no LLM called |
 | `decline_missing_fields.txt` | Missing `sum_insured`, `year_built`, `gross_floor_area_sqm` | `DECLINED` · mandatory field validation failure |
 | `referral_hazard_zone.txt` | Hawke's Bay flood zone, near Tutaekuri River, post-Cyclone Gabrielle risk, 1 flood claim NZD 55k | `REFER` · HIGH flood hazard reduces confidence · human review queue |
+| `referral_large_claim.txt` | Single large historical claim exceeding NZD 200k threshold | `REFER` · large loss loading triggers confidence penalty |
+| `referral_more_claims.txt` | Multiple claims in 3-year window pushing risk score above auto-approve threshold | `REFER` · claims frequency drives human escalation |
+| `referral_sum_insured.txt` | Sum insured exceeds NZD/AUD 50,000,000 pre-screen threshold | `REFER` · deterministic pre-screen rule fires · `pre_screen_triggered=True` |
 
 ---
 
@@ -811,7 +816,7 @@ AI_UNDERWRITING_SYSTEMS/
 ├── main.py                                    FastAPI entry point + router wiring
 ├── streamlit_app.py                           Underwriter UI (Submit · Queue · Lookup)
 ├── pyproject.toml                             Dependencies managed by uv
-├── docker-compose.yml                         PostgreSQL 17 + pgvector + Redis
+├── docker-compose.yml                         PostgreSQL 17 + pgvector
 ├── Dockerfile
 ├── .env / .env.example
 │
@@ -852,16 +857,19 @@ AI_UNDERWRITING_SYSTEMS/
 │       │   ├── pricing.py                     Token to USD conversion per model
 │       │   ├── middleware.py                  Per-call cost recorder
 │       │   └── dashboard.py                   Streamlit cost analytics
+│       ├── audit/
+│       │   └── writer.py                      Hash-chained audit trail writer
+│       ├── progress_tracker.py                Real-time pipeline step tracking
 │       └── security/                          sanitiser.py (planned)
 │
-├── api/routers/
-│   ├── health.py                              GET /health
-│   ├── submissions.py                         POST + GET /api/v1/submissions
-│   └── pipeline.py                            Pipeline + queue endpoints
+│   └── api/routers/
+│       ├── health.py                          GET /health
+│       ├── submissions.py                     POST + GET /api/v1/submissions
+│       └── pipeline.py                        Pipeline + queue endpoints
 │
 ├── alembic/versions/                          5 migrations (0001-0005)
 ├── prompts/                                   7 agent prompt files v1.0.md
-├── samples/documents/                         4 broker test documents
+├── samples/documents/                         7 broker test documents
 ├── scripts/
 │   ├── seed_data.py                           15 customers · 15 claims · 15 embeddings
 │   └── run_ingestion.py                       CLI ingestion runner
