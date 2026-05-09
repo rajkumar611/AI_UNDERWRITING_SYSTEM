@@ -66,9 +66,3 @@ DOCUMENTS ATTACHED
 - Fire Systems Audit — December 2024
 - Site photographs (24 images)
 ================================================================
-
-EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
-Reason: Sum insured NZD 52,000,000 exceeds the NZD 50,000,000 threshold.
-Pre-screen rule fires: auto-REFER regardless of risk profile.
-Underwriter must review and approve the high-value exposure manually.
-================================================================

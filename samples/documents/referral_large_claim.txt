@@ -71,11 +71,3 @@ DOCUMENTS ATTACHED
 - Maintenance Contract — effective July 2023
 - Site photographs (16 images)
 ================================================================
-
-EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
-Reason: Single large loss of NZD 1,050,000 in last 3 years. Despite only
-1 claim, the severity (over NZD 1 million) significantly elevates the risk
-profile. AI will flag the large loss and return REFER. Underwriter should
-review the post-claim remediation evidence and decide on conditions (e.g.
-higher excess, mandatory annual refrigeration inspection).
-================================================================

@@ -71,10 +71,3 @@ DOCUMENTS ATTACHED
 - Electrical upgrade certificate — November 2024
 - Site photographs (14 images)
 ================================================================
-
-EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
-Reason: 3 claims in the last 3 years (Jan 2025, Aug 2024, Mar 2024) indicates
-elevated claim frequency. AI risk assessment will flag the pattern and return
-REFER. Underwriter should review the remediation steps and decide whether to
-approve with conditions (e.g. higher excess, annual inspection requirement).
-================================================================

@@ -71,13 +71,3 @@ DOCUMENTS ATTACHED
 - Geotechnical Assessment — June 2023
 - Site photographs (20 images)
 ================================================================
-
-EXPECTED OUTCOME: REFER — UNDERWRITER QUEUE
-Reason: Property is in a known flood risk zone (Hawke's Bay, post-Cyclone
-Gabrielle Category 2 classification). River Road proximity to Tutaekuri
-River stopbank will trigger elevated flood hazard scoring. Hazard evaluation
-agent will return HIGH flood risk, pushing AI confidence below 0.70.
-Underwriter should review the flood barrier measures and decide on
-conditions (e.g. flood exclusion clause, higher excess, mandatory annual
-flood barrier inspection).
-================================================================
